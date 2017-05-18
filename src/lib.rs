@@ -15,8 +15,8 @@
 
 extern crate rand;
 
-mod fields;
-mod numtheory;
+pub mod fields;
+pub mod numtheory;
 pub use numtheory::positivise;
 
 pub mod shamir;

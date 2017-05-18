@@ -6,9 +6,11 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
-//! FFT by in-place Cooley-Tukey algorithms.
+//! This module implements in-place 2-radix and 3-radix numeric theory
+//! transformations (FFT on modular fields) by in-place Cooley-Tukey algorithms.
 
-use super::Field;
+use fields::Field;
+use fields::Encode;
 
 /// 2-radix FFT.
 ///
@@ -18,7 +20,9 @@ use super::Field;
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft2<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+pub fn fft2<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field, F::E: Copy
+{
     fft2_in_place_rearrange(zp, &mut *data);
     fft2_in_place_compute(zp, &mut *data, omega);
 }
@@ -31,17 +35,19 @@ pub fn fft2<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft2_inverse<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+pub fn fft2_inverse<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field + Encode<u32>, F::E: Copy
+{
     let omega_inv = zp.inv(omega);
     let len = data.len();
-    let len_inv = zp.inv(zp.from_u64(len as u64));
+    let len_inv = zp.inv(zp.encode(len as u32));
     fft2(zp, data, omega_inv);
     for mut x in data {
         *x = zp.mul(*x, len_inv);
     }
 }
 
-fn fft2_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::U]) {
+fn fft2_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::E]) {
     let mut target = 0;
     for pos in 0..data.len() {
         if target > pos {
@@ -56,12 +62,14 @@ fn fft2_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::U]) {
     }
 }
 
-fn fft2_in_place_compute<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+fn fft2_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field, F::E: Copy
+{
     let mut depth = 0usize;
     while 1usize << depth < data.len() {
         let step = 1usize << depth;
         let jump = 2 * step;
-        let factor_stride = zp.qpow(omega, (data.len() / step / 2) as u32);
+        let factor_stride = zp.pow(omega, (data.len() / step / 2) as u32);
         let mut factor = zp.one();
         for group in 0usize..step {
             let mut pair = group;
@@ -89,7 +97,7 @@ fn trigits_len(n: usize) -> usize {
     result
 }
 
-fn fft3_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::U]) {
+fn fft3_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::E]) {
     let mut target = 0isize;
     let trigits_len = trigits_len(data.len() - 1);
     let mut trigits: Vec<u8> = ::std::iter::repeat(0).take(trigits_len).collect();
@@ -111,13 +119,15 @@ fn fft3_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::U]) {
     }
 }
 
-fn fft3_in_place_compute<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+fn fft3_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field, F::E: Copy
+{
     let mut step = 1;
-    let big_omega = zp.qpow(omega, (data.len() as u32 / 3));
+    let big_omega = zp.pow(omega, (data.len() as u32 / 3));
     let big_omega_sq = zp.mul(big_omega, big_omega);
     while step < data.len() {
         let jump = 3 * step;
-        let factor_stride = zp.qpow(omega, (data.len() / step / 3) as u32);
+        let factor_stride = zp.pow(omega, (data.len() / step / 3) as u32);
         let mut factor = zp.one();
         for group in 0usize..step {
             let factor_sq = zp.mul(factor, factor);
@@ -149,7 +159,9 @@ fn fft3_in_place_compute<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft3<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+pub fn fft3<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field, F::E: Copy
+{
     fft3_in_place_rearrange(zp, &mut *data);
     fft3_in_place_compute(zp, &mut *data, omega);
 }
@@ -162,9 +174,11 @@ pub fn fft3<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft3_inverse<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
+pub fn fft3_inverse<F>(zp: &F, data: &mut [F::E], omega: F::E) 
+where F: Field + Encode<u32>, F::E: Copy
+{
     let omega_inv = zp.inv(omega);
-    let len_inv = zp.inv(zp.from_u64(data.len() as u64));
+    let len_inv = zp.inv(zp.encode(data.len() as u32));
     fft3(zp, data, omega_inv);
     for mut x in data {
         *x = zp.mul(*x, len_inv);
@@ -174,72 +188,88 @@ pub fn fft3_inverse<F: Field>(zp: &F, data: &mut [F::U], omega: F::U) {
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use fields::Field;
-
-    pub fn from<F: Field>(zp: &F, data: &[u64]) -> Vec<F::U> {
-        data.iter().map(|&x| zp.from_u64(x)).collect()
+    use ::fields::{Field, PrimeField, Encode, Decode};
+    
+    pub fn from<F>(field: &F, data: &[u32]) -> Vec<F::E> 
+    where F: Field + Encode<u32>, F::E: Copy
+    {
+        data.iter().map(|&x| field.encode(x)).collect()
     }
 
-    pub fn back<F: Field>(zp: &F, data: &[F::U]) -> Vec<u64> {
-        data.iter().map(|&x| zp.to_u64(x)).collect()
+    pub fn back<F>(field: &F, data: &[F::E]) -> Vec<u32> 
+    where F: Field + Decode<u32>, F::E: Copy
+    {
+        data.iter().map(|&x| field.decode(x)).collect()
     }
 
-    pub fn test_fft2<F: Field>() {
+    pub fn test_fft2<F>()
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
         // field is Z_433 in which 354 is an 8th root of unity
-        let zp = F::new(433);
-        let omega = zp.from_u64(354);
+        let zp = F::new(433.into());
+        let omega = zp.encode(354);
 
         let mut data = from(&zp, &[1, 2, 3, 4, 5, 6, 7, 8]);
         fft2(&zp, &mut data, omega);
         assert_eq!(back(&zp, &data), [36, 303, 146, 3, 429, 422, 279, 122]);
     }
 
-    pub fn test_fft2_inverse<F: Field>() {
+    pub fn test_fft2_inverse<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
         // field is Z_433 in which 354 is an 8th root of unity
-        let zp = F::new(433);
-        let omega = zp.from_u64(354);
+        let zp = F::new(433.into());
+        let omega = zp.encode(354);
 
         let mut data = from(&zp, &[36, 303, 146, 3, 429, 422, 279, 122]);
         fft2_inverse(&zp, &mut *data, omega);
         assert_eq!(back(&zp, &data), [1, 2, 3, 4, 5, 6, 7, 8])
     }
 
-    pub fn test_fft2_big<F: Field>() {
-        let zp = F::new(5038849);
-        let omega = zp.from_u64(4318906);
+    pub fn test_fft2_big<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
+        let zp = F::new(5038849.into());
+        let omega = zp.encode(4318906);
 
-        let mut data: Vec<_> = (0..256).map(|a| zp.from_u64(a)).collect();
+        let mut data: Vec<_> = (0..256).map(|a| zp.encode(a)).collect();
         fft2(&zp, &mut *data, omega);
         fft2_inverse(&zp, &mut data, omega);
 
         assert_eq!(back(&zp, &data), (0..256).collect::<Vec<_>>());
     }
 
-    pub fn test_fft3<F: Field>() {
+    pub fn test_fft3<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
         // field is Z_433 in which 150 is an 9th root of unity
-        let zp = F::new(433);
-        let omega = zp.from_u64(150);
+        let zp = F::new(433.into());
+        let omega = zp.encode(150);
 
         let mut data = from(&zp, &[1, 2, 3, 4, 5, 6, 7, 8, 9]);
         fft3(&zp, &mut data, omega);
         assert_eq!(back(&zp, &data), [45, 404, 407, 266, 377, 47, 158, 17, 20]);
     }
 
-    pub fn test_fft3_inverse<F: Field>() {
+    pub fn test_fft3_inverse<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
         // field is Z_433 in which 150 is an 9th root of unity
-        let zp = F::new(433);
-        let omega = zp.from_u64(150);
+        let zp = F::new(433.into());
+        let omega = zp.encode(150);
 
         let mut data = from(&zp, &[45, 404, 407, 266, 377, 47, 158, 17, 20]);
         fft3_inverse(&zp, &mut *data, omega);
         assert_eq!(back(&zp, &data), [1, 2, 3, 4, 5, 6, 7, 8, 9])
     }
 
-    pub fn test_fft3_big<F: Field>() {
-        let zp = F::new(5038849);
-        let omega = zp.from_u64(1814687);
+    pub fn test_fft3_big<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Copy, F::P: From<u32>
+    {
+        let zp = F::new(5038849.into());
+        let omega = zp.encode(1814687);
 
-        let mut data: Vec<_> = (0..19683).map(|a| zp.from_u64(a)).collect();
+        let mut data: Vec<_> = (0..19683).map(|a| zp.encode(a)).collect();
         fft3(&zp, &mut data, omega);
         fft3_inverse(&zp, &mut data, omega);
 

@@ -18,7 +18,7 @@ mod shamir_vs_packed {
     pub fn bench_100_shamir(b: &mut Bencher) {
         let ref tss = ShamirSecretSharing {
             threshold: 155 / 3,
-            parts: 728 / 3,
+            share_count: 728 / 3,
             prime: 746497,
         };
 

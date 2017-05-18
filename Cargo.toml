@@ -1,8 +1,8 @@
 [package]
 name = "threshold-secret-sharing"
-version = "0.2.3-pre"
+version = "0.3.0-pre"
 authors = [
-  "Morten Dahl <morten.dahl@snips.ai>",
+  "Morten Dahl <mortendahlcs@gmail.com>",
   "Mathieu Poumeyrol <mathieu.poumeyrol@snips.ai>"
 ]
 description = "A pure-Rust implementation of various threshold secret sharing schemes"
@@ -23,14 +23,20 @@ travis-ci = { repository = "snipsco/rust-threshold-secret-sharing" }
 
 [features]
 paramgen = ["primal"]
+rampfield = ["ramp"]
 
 [dependencies]
 rand = "0.3.*"
 primal = { version = "0.2", optional = true }
+ramp = { version = "0.3", optional = true }
 
 [dev-dependencies]
 bencher = "0.1"
 
 [[bench]]
 name = "packed"
+harness = false
+
+[[bench]]
+name = "numtheory"
 harness = false
