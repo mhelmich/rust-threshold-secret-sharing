@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(recovered_values, values);
 
         assert_eq!(newton_evaluate(&recovered_poly, 10, field), 3);
-        assert_eq!(newton_evaluate(&recovered_poly, 11, field), -2);
+        assert_eq!(newton_evaluate(&recovered_poly, 11, field), 15);
         assert_eq!(newton_evaluate(&recovered_poly, 12, field), 8);
     }
 
@@ -124,7 +124,7 @@ mod tests {
         let field = fields::NaturalPrimeField(17);
 
         let coefficients = compute_newton_coefficients(&points, &values, &field);
-        assert_eq!(coefficients, vec![8, 8, -10, 4, 0]);
+        assert_eq!(coefficients, vec![8, 8, 7, 4, 0]);
     }
     
 }

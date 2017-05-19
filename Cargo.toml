@@ -34,6 +34,10 @@ ramp = { version = "0.3", optional = true }
 bencher = "0.1"
 
 [[bench]]
+name = "fields"
+harness = false
+
+[[bench]]
 name = "packed"
 harness = false
 

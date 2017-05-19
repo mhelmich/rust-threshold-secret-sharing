@@ -17,20 +17,6 @@ use ::numtheory::{generic_mod_pow};
 #[derive(Clone,Debug,PartialEq)]
 pub struct LargePrimeField(ramp::Int);
 
-// impl LargePrimeField {
-//     fn egcd(a: &Self, b: &Self) -> (Self, Self, Self) {
-//         if b == 0 {
-//             (a.clone(), Self::one(), Self::zero())
-//         } else {
-//             let q = a / b;
-//             let r = a % b;
-//             let (d, s, t) = Self::egcd(b, &r);
-//             let new_t = s - &t * q;
-//             (d, t, new_t)
-//         }
-//     }
-// }
-
 impl Field for LargePrimeField
 {
     /// Invariant is that numbers are stored in canonical form in [0..prime).
@@ -80,7 +66,7 @@ impl Field for LargePrimeField
 
         let d = old_r;
         let inv = old_s % &self.0;
-        assert_eq!(d, ramp::Int::one());
+        debug_assert_eq!(d, ramp::Int::one());
         if inv >= 0 {
             inv
         } else {
@@ -94,7 +80,6 @@ impl Field for LargePrimeField
     
     fn sample_with_replacement<R: rand::Rng>(&self, count: usize, rng: &mut R) -> Vec<Self::E> {
         (0..count).map(|_| rng.gen_uint_below(&self.0)).collect()
-        // unimplemented!();
     }
 }
 

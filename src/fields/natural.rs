@@ -1,3 +1,6 @@
+// Copyright (c) 2017 rust-threshold-secret-sharing developers
+
+
 
 use rand;
 use std::borrow::Borrow;
@@ -27,7 +30,12 @@ impl Field for NaturalPrimeField<i64>
     }
     
     fn sub<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
-        (a.borrow() - b.borrow()) % self.0
+        let c = (a.borrow() - b.borrow()) % self.0;
+        if c >= 0 {
+            c
+        } else {
+            c + self.0
+        }
     }
     
     fn mul<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
@@ -35,11 +43,23 @@ impl Field for NaturalPrimeField<i64>
     }
     
     fn pow<A: Borrow<Self::E>>(&self, a: A, e: u32) -> Self::E {
-        mod_pow(*a.borrow(), e, self.0)
+        let c = mod_pow(*a.borrow(), e, self.0);
+        c
+        // if c >= 0 {
+        //     c
+        // } else {
+        //     c + self.0
+        // }
     }
     
     fn inv<A: Borrow<Self::E>>(&self, a: A) -> Self::E {
-        mod_inverse(*a.borrow(), self.0)
+        let inv = mod_inverse(*a.borrow(), self.0);
+        inv
+        // if inv >= 0 {
+        //     inv
+        // } else {
+        //     inv + self.0
+        // }
     }
     
     fn eq<L: Borrow<Self::E>, R: Borrow<Self::E>>(&self, lhs: L, rhs: R) -> bool {
@@ -63,18 +83,13 @@ impl PrimeField for NaturalPrimeField<i64> {
 
 impl Encode<u32> for NaturalPrimeField<i64> {
     fn encode(&self, x: u32) -> Self::E {
-        x as i64
+        (x as i64) % self.0
     }
 }
 
 impl Decode<u32> for NaturalPrimeField<i64> {
     fn decode<E: Borrow<Self::E>>(&self, x: E) -> u32 {
-        let x = x.borrow() % self.0; // TODO get rid of this -- should be normalised during computations
-        if x >= 0 {
-            x as u32
-        } else {
-            (x + self.0) as u32
-        }
+        *x.borrow() as u32
     }
 }
 

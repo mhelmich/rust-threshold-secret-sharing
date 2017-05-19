@@ -130,9 +130,7 @@ pub use self::natural::NaturalPrimeField;
 mod montgomery;
 pub use self::montgomery::MontgomeryField32;
 
-#[cfg(feature="largefield")]
-mod large;
-#[cfg(feature="largefield")]
-pub use self::large::LargePrimeField;
-// pub mod ramp;
+#[cfg(feature="largefield")] mod large;
+#[cfg(feature="largefield")] pub use self::large::LargePrimeField;
+
 // pub mod native;

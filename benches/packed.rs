@@ -18,8 +18,8 @@ mod shamir_vs_packed {
     use tss::fields::*;
     
     // type MyField = NaturalPrimeField<i64>;
-    // type MyField = MontgomeryField32;
-    type MyField = LargePrimeField;
+    type MyField = MontgomeryField32;
+    // type MyField = LargePrimeField;
 
     pub fn bench_100_shamir(b: &mut Bencher) {
         let field = MyField::new(746497_u32.into());
