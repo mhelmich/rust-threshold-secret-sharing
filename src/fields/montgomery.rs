@@ -9,6 +9,7 @@
 //! Montgomery modular multiplication field.
 
 use rand;
+use std::borrow::Borrow;
 
 use super::{Field, PrimeField, Encode, Decode};
 
@@ -26,7 +27,7 @@ pub struct Value(u32);
 /// This implementation assumes R=2^32. In other terms, the modulus must be
 /// in the u32 range. All values will be positive, in the 0..modulus range,
 /// and represented by a u32.
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct MontgomeryField32 {
     pub n: u32, // the prime
     pub n_quote: u32,
@@ -77,8 +78,8 @@ impl Encode<u32> for MontgomeryField32 {
 }
 
 impl Decode<u32> for MontgomeryField32 {
-    fn decode(&self, a: Self::E) -> u32 {
-        ((a.0 as u64) * (self.r_inv as u64) % (self.n as u64)) as u32
+    fn decode<E: Borrow<Self::E>>(&self, a: E) -> u32 {
+        ((a.borrow().0 as u64) * (self.r_inv as u64) % (self.n as u64)) as u32
     }
 }
 
@@ -96,8 +97,8 @@ impl Field for MontgomeryField32
         self.encode(1)
     }
     
-    fn add(&self, a: Self::E, b: Self::E) -> Self::E {
-        let sum = a.0 as u64 + b.0 as u64;
+    fn add<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        let sum = a.borrow().0 as u64 + b.borrow().0 as u64;
         if sum > self.n as u64 {
             Value((sum - self.n as u64) as u32)
         } else {
@@ -105,29 +106,30 @@ impl Field for MontgomeryField32
         }
     }
     
-    fn sub(&self, a: Self::E, b: Self::E) -> Self::E {
-        if a.0 > b.0 {
-            Value(a.0 - b.0)
+    fn sub<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        if a.borrow().0 > b.borrow().0 {
+            Value(a.borrow().0 - b.borrow().0)
         } else {
-            Value((a.0 as u64 + self.n as u64 - b.0 as u64) as u32)
+            Value((a.borrow().0 as u64 + self.n as u64 - b.borrow().0 as u64) as u32)
         }
     }
 
-    fn mul(&self, a: Self::E, b: Self::E) -> Self::E {
-        self.redc((a.0 as u64).wrapping_mul(b.0 as u64))
+    fn mul<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        self.redc((a.borrow().0 as u64).wrapping_mul(b.borrow().0 as u64))
     }
 
-    fn inv(&self, a: Self::E) -> Self::E {
-        let ar_modn_inv = ::numtheory::mod_inverse(a.0 as i64, self.n as i64);
+    fn inv<A: Borrow<Self::E>>(&self, a: A) -> Self::E {
+        let ar_modn_inv = ::numtheory::mod_inverse(a.borrow().0 as i64, self.n as i64);
         self.redc((ar_modn_inv as u64).wrapping_mul(self.r_cube as u64))
     }
     
-    fn eq(&self, lhs: Self::E, rhs: Self::E) -> bool {
-        (lhs.0 % self.n) == (rhs.0 % self.n) // TODO is this enough?
+    fn eq<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, lhs: A, rhs: B) -> bool {
+        (lhs.borrow().0 % self.n) == (rhs.borrow().0 % self.n) // TODO is this enough?
     }
     
-    fn pow(&self, a: Self::E, e: u32) -> Self::E {
-        let mut x = a;
+    fn pow<A: Borrow<Self::E>>(&self, a: A, e: u32) -> Self::E {
+        // TODO improve
+        let mut x = *a.borrow();
         let mut e = e;
         let mut acc = self.one();
         while e > 0 {

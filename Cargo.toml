@@ -23,7 +23,7 @@ travis-ci = { repository = "snipsco/rust-threshold-secret-sharing" }
 
 [features]
 paramgen = ["primal"]
-rampfield = ["ramp"]
+largefield = ["ramp"]
 
 [dependencies]
 rand = "0.3.*"

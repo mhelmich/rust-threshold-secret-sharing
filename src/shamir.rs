@@ -25,11 +25,11 @@ use fields::Encode;
 ///
 /// ```
 ///    use threshold_secret_sharing::shamir;
-///    use threshold_secret_sharing::fields::natural::NaturalPrimeField;
+///    use threshold_secret_sharing::fields;
 ///    let tss = shamir::ShamirSecretSharing {
 ///        threshold: 9,
 ///        share_count: 20,
-///        field: NaturalPrimeField(41)
+///        field: fields::NaturalPrimeField(41)
 ///    };
 ///
 ///    let secret = 5;
@@ -46,7 +46,7 @@ use fields::Encode;
 /// ```
 #[derive(Debug)]
 pub struct ShamirSecretSharing<F>
-where F: Field, F::E: Copy
+where F: Field, F::E: Clone
 {
     /// Maximum number of shares that can be known without exposing the secret.
     pub threshold: usize,
@@ -57,7 +57,7 @@ where F: Field, F::E: Copy
 }
 
 impl<F> ShamirSecretSharing<F> 
-where F: Field, F: Encode<u32>, F::E: Copy
+where F: Field, F: Encode<u32>, F::E: Clone
 {
     /// Minimum number of shares required to reconstruct secret.
     ///
@@ -116,7 +116,7 @@ where F: Field, F: Encode<u32>, F::E: Copy
 mod tests {
 
     use super::*;
-    use fields::natural::NaturalPrimeField;
+    use fields::NaturalPrimeField;
     
     // Small preset parameters for tests.
     pub static SHAMIR_5_20: ShamirSecretSharing<NaturalPrimeField<i64>> = ShamirSecretSharing {

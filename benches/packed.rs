@@ -14,26 +14,47 @@ mod shamir_vs_packed {
 
     use bencher::Bencher;
     use tss::shamir::*;
+    use tss::packed::*;
+    use tss::fields::*;
+    
+    // type MyField = NaturalPrimeField<i64>;
+    // type MyField = MontgomeryField32;
+    type MyField = LargePrimeField;
 
     pub fn bench_100_shamir(b: &mut Bencher) {
-        let ref tss = ShamirSecretSharing {
+        let field = MyField::new(746497_u32.into());
+        
+        let tss = ShamirSecretSharing {
             threshold: 155 / 3,
             share_count: 728 / 3,
-            prime: 746497,
+            field: field.clone(),
         };
 
-        let all_secrets: Vec<i64> = vec![5 ; 100 ];
+        let all_secrets = vec![5 ; 100]
+            .iter().map(|&s| field.encode(s)).collect::<Vec<_>>();
+            
         b.iter(|| {
-            let _shares: Vec<Vec<i64>> = all_secrets.iter()
-                .map(|&secret| tss.share(secret))
+            let _shares: Vec<Vec<_>> = all_secrets.iter()
+                .map(|secret| tss.share(secret.clone()))
                 .collect();
         });
     }
 
     pub fn bench_100_packed(b: &mut Bencher) {
-        use tss::packed::*;
-        let ref pss = PSS_155_728_100;
-        let all_secrets: Vec<i64> = vec![5 ; 100];
+        let field = MyField::new(746497_u32.into());
+        
+        let pss = PackedSecretSharing {
+            threshold: 155,
+            share_count: 728,
+            secret_count: 100,
+            omega_secrets: field.encode(95660),
+            omega_shares: field.encode(610121),
+            field: field.clone(),
+        };
+        
+        let all_secrets = vec![5 ; 100]
+            .iter().map(|&s| field.encode(s)).collect::<Vec<_>>();
+        
         b.iter(|| {
             let _shares = pss.share(&all_secrets);
         })
@@ -75,7 +96,7 @@ mod packed {
         let all_shares = pss.share(&secrets);
 
         // reconstruct using minimum number of shares required
-        let indices: Vec<usize> = (0..pss.reconstruct_limit()).collect();
+        let indices: Vec<_> = (0..pss.reconstruct_limit() as u32).collect();
         let shares = &all_shares[0..pss.reconstruct_limit()];
 
         b.iter(|| {

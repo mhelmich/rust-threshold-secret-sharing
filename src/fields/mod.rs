@@ -7,6 +7,7 @@
 // modified, or distributed except according to those terms.
 
 use rand;
+use std::borrow::Borrow;
 
 /// Abstract (Finite) Field definition.
 ///
@@ -20,19 +21,19 @@ pub trait Field
     
     fn one(&self) -> Self::E;
         
-    fn add(&self, a: Self::E, b: Self::E) -> Self::E;
+    fn add<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E;
     
-    fn sub(&self, a: Self::E, b: Self::E) -> Self::E;
+    fn sub<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E;
     
-    fn mul(&self, a: Self::E, b: Self::E) -> Self::E;
+    fn mul<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E;
     
-    fn pow(&self, a: Self::E, e: u32) -> Self::E;
+    fn pow<A: Borrow<Self::E>>(&self, a: A, e: u32) -> Self::E;
     
-    fn inv(&self, a: Self::E) -> Self::E;
+    fn inv<A: Borrow<Self::E>>(&self, a: A) -> Self::E;
     
-    fn eq(&self, lhs: Self::E, rhs: Self::E) -> bool;
+    fn eq<L: Borrow<Self::E>, R: Borrow<Self::E>>(&self, lhs: L, rhs: R) -> bool;
     
-    fn neq(&self, lhs: Self::E, rhs: Self::E) -> bool {
+    fn neq<L: Borrow<Self::E>, R: Borrow<Self::E>>(&self, lhs: L, rhs: R) -> bool {
         ! self.eq(lhs, rhs)
     }
     
@@ -55,8 +56,9 @@ where Self: Field
 pub trait Decode<U>
 where Self: Field
 {
-    fn decode(&self, e: Self::E) -> U;
+    fn decode<E: Borrow<Self::E>>(&self, e: E) -> U;
 }
+
 
 macro_rules! all_fields_test {
     ($field:ty) => {
@@ -73,11 +75,6 @@ macro_rules! all_fields_test {
         #[test] fn test_fft3_big() { ::numtheory::fft::test::test_fft3_big::<$field>(); }
     }
 }
-
-pub mod natural;
-pub mod montgomery;
-// pub mod ramp;
-// pub mod native;
 
 #[cfg(test)]
 pub mod test {
@@ -125,3 +122,17 @@ pub mod test {
         assert_eq!(zp.decode(zp.pow(zp.encode(2), 6)), 13);
     }
 }
+
+
+mod natural;
+pub use self::natural::NaturalPrimeField;
+
+mod montgomery;
+pub use self::montgomery::MontgomeryField32;
+
+#[cfg(feature="largefield")]
+mod large;
+#[cfg(feature="largefield")]
+pub use self::large::LargePrimeField;
+// pub mod ramp;
+// pub mod native;

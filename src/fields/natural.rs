@@ -1,12 +1,13 @@
 
 use rand;
+use std::borrow::Borrow;
 
 use ::fields::Field;
 use ::fields::PrimeField;
 use ::fields::{Encode, Decode};
 use ::numtheory::{mod_pow, mod_inverse};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 pub struct NaturalPrimeField<T>(pub T);
 
 impl Field for NaturalPrimeField<i64> 
@@ -21,28 +22,28 @@ impl Field for NaturalPrimeField<i64>
         1_i64
     }
     
-    fn add(&self, a: Self::E, b: Self::E) -> Self::E {
-        (a + b) % self.0
+    fn add<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        (a.borrow() + b.borrow()) % self.0
     }
     
-    fn sub(&self, a: Self::E, b: Self::E) -> Self::E {
-        (a - b) % self.0
+    fn sub<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        (a.borrow() - b.borrow()) % self.0
     }
     
-    fn mul(&self, a: Self::E, b: Self::E) -> Self::E {
-        (a * b) % self.0
+    fn mul<A: Borrow<Self::E>, B: Borrow<Self::E>>(&self, a: A, b: B) -> Self::E {
+        (a.borrow() * b.borrow()) % self.0
     }
     
-    fn pow(&self, a: Self::E, e: u32) -> Self::E {
-        mod_pow(a, e, self.0)
+    fn pow<A: Borrow<Self::E>>(&self, a: A, e: u32) -> Self::E {
+        mod_pow(*a.borrow(), e, self.0)
     }
     
-    fn inv(&self, a: Self::E) -> Self::E {
-        mod_inverse(a, self.0)
+    fn inv<A: Borrow<Self::E>>(&self, a: A) -> Self::E {
+        mod_inverse(*a.borrow(), self.0)
     }
     
-    fn eq(&self, lhs: Self::E, rhs: Self::E) -> bool {
-        (lhs % self.0) == (rhs % self.0)
+    fn eq<L: Borrow<Self::E>, R: Borrow<Self::E>>(&self, lhs: L, rhs: R) -> bool {
+        (lhs.borrow() % self.0) == (rhs.borrow() % self.0)
     }
     
     fn sample_with_replacement<R: rand::Rng>(&self, count: usize, rng: &mut R) -> Vec<Self::E> {
@@ -58,7 +59,6 @@ impl PrimeField for NaturalPrimeField<i64> {
     fn new(prime: Self::P) -> Self {
         NaturalPrimeField(prime as i64)
     }
-    
 }
 
 impl Encode<u32> for NaturalPrimeField<i64> {
@@ -68,8 +68,8 @@ impl Encode<u32> for NaturalPrimeField<i64> {
 }
 
 impl Decode<u32> for NaturalPrimeField<i64> {
-    fn decode(&self, x: Self::E) -> u32 {
-        let x = x % self.0; // TODO get rid of this -- should be normalised during computations
+    fn decode<E: Borrow<Self::E>>(&self, x: E) -> u32 {
+        let x = x.borrow() % self.0; // TODO get rid of this -- should be normalised during computations
         if x >= 0 {
             x as u32
         } else {

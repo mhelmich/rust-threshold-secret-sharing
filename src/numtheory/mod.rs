@@ -32,11 +32,6 @@ pub fn gcd(a: i64, b: i64) -> (i64, i64, i64) {
     }
 }
 
-#[test]
-fn test_gcd() {
-    assert_eq!(gcd(12, 16), (4, -1, 1));
-}
-
 pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
     
     // simple cases
@@ -98,11 +93,6 @@ pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
     (a << r, s, t)
 }
 
-#[test]
-pub fn test_binary_egcd() {
-    assert_eq!(binary_egcd(10, 4), (2, 1, -2));
-}
-
 /// Inverse of `k` in the *Zp* field defined by `prime`.
 pub fn mod_inverse(k: i64, prime: i64) -> i64 {
     let k2 = k % prime;
@@ -123,12 +113,6 @@ pub fn mod_inverse(k: i64, prime: i64) -> i64 {
 //     (prime + r) % prime
 // }
 
-#[test]
-fn test_mod_inverse() {
-    assert_eq!(mod_inverse(3, 7), 5);
-}
-
-
 /// `x` to the power of `e` in the *Zp* field defined by `prime`.
 pub fn mod_pow(mut x: i64, mut e: u32, prime: i64) -> i64 {
     let mut acc = 1;
@@ -146,15 +130,26 @@ pub fn mod_pow(mut x: i64, mut e: u32, prime: i64) -> i64 {
     acc
 }
 
-#[test]
-fn test_mod_pow() {
-    assert_eq!(mod_pow(2, 0, 17), 1);
-    assert_eq!(mod_pow(2, 3, 17), 8);
-    assert_eq!(mod_pow(2, 6, 17), 13);
-
-    assert_eq!(mod_pow(-3, 0, 17), 1);
-    assert_eq!(mod_pow(-3, 1, 17), -3);
-    assert_eq!(mod_pow(-3, 15, 17), -6);
+pub fn generic_mod_pow<F>(field: &F, a: F::E, e: u32) -> F::E
+where F: Field
+{
+    // TODO improve (or at least compare to non-generic)
+    
+    let mut x = a;
+    let mut e = e;
+    let mut acc = field.one();
+    while e > 0 {
+        if e % 2 == 0 {
+            // even
+            // no-op
+        } else {
+            // odd
+            acc = field.mul(&acc, &x);
+        }
+        x = field.mul(&x, &x);  // waste one of these by having it here but code is simpler (tiny bit)
+        e = e >> 1;
+    }
+    acc
 }
 
 /// Map `values` from `[-n/2, n/2)` to `[0, n)`.
@@ -168,18 +163,53 @@ pub fn positivise(values: &[i64], n: i64) -> Vec<i64> {
 ///
 /// Current implementation uses Horner's method.
 pub fn mod_evaluate_polynomial<F>(coefficients: &[F::E], point: F::E, field: &F) -> F::E
-where F: Field, F: Encode<u32>, F::E: Copy
+where F: Field, F: Encode<u32>, F::E: Clone
 {
     // evaluate using Horner's rule
     //  - to combine with fold we consider the coefficients in reverse order
     coefficients.iter().rev()
-        .fold(field.zero(), |partial, &coef| field.add(field.mul(partial, point), coef))
+        .fold(field.zero(), |partial, coef| field.add(field.mul(partial, &point), coef))
 }
 
-#[test]
-fn test_mod_evaluate_polynomial() {
-    let poly = vec![1, 2, 3, 4, 5, 6];
-    let point = 5;
-    let field = ::fields::natural::NaturalPrimeField(17);
-    assert_eq!(mod_evaluate_polynomial(&poly, point, &field), 4);
+
+#[cfg(test)]
+mod tests {
+    
+    use super::*;
+    use fields;
+    
+    #[test]
+    fn test_gcd() {
+        assert_eq!(gcd(12, 16), (4, -1, 1));
+    }
+    
+    #[test]
+    pub fn test_binary_egcd() {
+        assert_eq!(binary_egcd(10, 4), (2, 1, -2));
+    }
+    
+    #[test]
+    fn test_mod_inverse() {
+        assert_eq!(mod_inverse(3, 7), 5);
+    }
+    
+    #[test]
+    fn test_mod_pow() {
+        assert_eq!(mod_pow(2, 0, 17), 1);
+        assert_eq!(mod_pow(2, 3, 17), 8);
+        assert_eq!(mod_pow(2, 6, 17), 13);
+
+        assert_eq!(mod_pow(-3, 0, 17), 1);
+        assert_eq!(mod_pow(-3, 1, 17), -3);
+        assert_eq!(mod_pow(-3, 15, 17), -6);
+    }
+    
+    #[test]
+    fn test_mod_evaluate_polynomial() {
+        let poly = vec![1, 2, 3, 4, 5, 6];
+        let point = 5;
+        let field = fields::NaturalPrimeField(17);
+        assert_eq!(mod_evaluate_polynomial(&poly, point, &field), 4);
+    }
+    
 }

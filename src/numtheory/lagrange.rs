@@ -21,7 +21,7 @@ use ::fields::Field;
 /// This is obviously less general than `newton_interpolation_general` as we
 /// only get a single value, but it is much faster.
 pub fn lagrange_interpolation_at_zero<F>(points: &[F::E], values: &[F::E], field: &F) -> F::E
-where F: Field, F::E: Copy
+where F: Field, F::E: Clone
 {
     // TODO coef computations could be reused
     
@@ -30,19 +30,19 @@ where F: Field, F::E: Copy
     let mut acc = field.zero();
     for i in 0..values.len() {
         // compute Lagrange coefficient
-        let xi = points[i];
+        let xi = &points[i];
         let mut num = field.one();
         let mut denum = field.one();
         for j in 0..values.len() {
             if j != i {
-                let xj = points[j];
+                let xj = &points[j];
                 num = field.mul(num, xj);
                 denum = field.mul(denum, field.sub(xj, xi));
             }
         }
         let coef = field.mul(num, field.inv(denum));
         // update sum
-        let yi = values[i];
+        let yi = &values[i];
         acc = field.add(acc, field.mul(yi, coef));
     }
     acc
