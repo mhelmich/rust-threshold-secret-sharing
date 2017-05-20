@@ -6,8 +6,6 @@ extern crate ramp;
 
 use std::borrow::Borrow;
 use rand;
-use rand::Rng;
-use self::ramp::RandomInt;
 
 use ::fields::Field;
 use ::fields::PrimeField;
@@ -79,6 +77,7 @@ impl Field for LargePrimeField
     }
     
     fn sample_with_replacement<R: rand::Rng>(&self, count: usize, rng: &mut R) -> Vec<Self::E> {
+        use self::ramp::RandomInt;
         (0..count).map(|_| rng.gen_uint_below(&self.0)).collect()
     }
 }

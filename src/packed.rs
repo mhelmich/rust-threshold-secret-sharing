@@ -216,8 +216,7 @@ pub use self::instances::*;
 mod tests {
 
     use super::*;
-    use numtheory::*;
-    use ::fields::{PrimeField, Encode, Decode};
+    use ::fields::*;
     
     pub fn test_recover_polynomial<F>()
     where F: PrimeField + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
@@ -234,12 +233,9 @@ mod tests {
         
         let secrets = vec![1, 2, 3];
         let randomness = vec![8, 8, 8, 8];  // use fixed randomness
-        let poly = pss.recover_polynomial(
-            &secrets.iter().map(|&s| field.encode(s)).collect::<Vec<_>>(), // TODO easy way to encode
-            randomness.iter().map(|&r| field.encode(r)).collect::<Vec<_>>() // TODO easy way to encode
-        );
+        let poly = pss.recover_polynomial(&field.encode_slice(secrets), field.encode_slice(randomness));
         assert_eq!(
-            poly.iter().map(|c| field.decode(c)).collect::<Vec<_>>(), // TODO easy way to decode
+            field.decode_slice(poly),
             vec![113, 51, 261, 267, 108, 432, 388, 112]
         );
     }
@@ -258,16 +254,15 @@ mod tests {
             field: field.clone(),
         };
         
-        let poly = vec![113,  51, 261, 267, 108, 432, 388, 112,   0,
-                          0,   0,   0,   0,   0,   0,   0,   0,   0,
-                          0,   0,   0,   0,   0,   0,   0,   0,   0]
-                        .iter().map(|&c| field.encode(c)).collect::<Vec<_>>(); // TODO
+        let poly = field.encode_slice([113,  51, 261, 267, 108, 432, 388, 112,   0,
+                                         0,   0,   0,   0,   0,   0,   0,   0,   0,
+                                         0,   0,   0,   0,   0,   0,   0,   0,   0]);
         let points = &pss.evaluate_polynomial(poly);
         assert_eq!(
-            points.iter().map(|v| field.decode(v)).collect::<Vec<_>>(), // TODO
-            vec![   0, 77, 230,  91, 286, 179, 337,  83, 212,
-                   88, 406, 58, 425, 345, 350, 336, 430, 404,
-                   51, 60, 305, 395,  84, 156, 160, 112, 422]
+            field.decode_slice(points),
+            [   0, 77, 230,  91, 286, 179, 337,  83, 212,
+               88, 406, 58, 425, 345, 350, 336, 430, 404,
+               51, 60, 305, 395,  84, 156, 160, 112, 422]
         );
     }
     
@@ -289,9 +284,7 @@ macro_rules! all_packed_tests {
 mod old_tests {
 
     use super::*;
-    use numtheory::*;
-    use ::fields;
-    use ::fields::{PrimeField, Encode, Decode};
+    use ::fields::*;
 
     #[test]
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -300,9 +293,7 @@ mod old_tests {
         let ref field = pss.field;
 
         // do sharing
-        let secrets: Vec<i64> = vec![5, 6, 7].iter()
-            .map(|&v| field.encode(v as u32))
-            .collect();
+        let secrets = field.encode_slice([5, 6, 7]);
         let mut shares = pss.share(&secrets);
 
         // manually recover secrets
@@ -315,11 +306,9 @@ mod old_tests {
             .map(|point| mod_evaluate_polynomial(&poly, point, field))
             .collect();
 
-        use numtheory::positivise;
-        // TODO ideally eq for wrapping type should handle this, so no need to positivise
         assert_eq!(
-            positivise(&recovered_secrets, field.0),
-            secrets
+            field.decode_slice(recovered_secrets),
+            field.decode_slice(secrets)
         );
     }
 
@@ -335,18 +324,18 @@ mod old_tests {
     fn test_share_reconstruct() {
         let ref pss = PSS_4_26_3;
         let secrets = vec![5, 6, 7];
-        let shares = pss.share(&secrets);
+        let shares = pss.share(&pss.field.encode_slice(&secrets));
 
         // reconstruction must work for all shares
         let indices: Vec<u32> = (0..shares.len() as u32).collect();
         let recovered_secrets = pss.reconstruct(&indices, &shares);
-        assert_eq!(positivise(&recovered_secrets, pss.field.0), secrets);
+        assert_eq!(pss.field.decode_slice(recovered_secrets), secrets);
 
         // .. and for only sufficient shares
         let indices: Vec<u32> = (0..pss.reconstruct_limit() as u32).collect();
         let recovered_secrets = pss.reconstruct(&indices, &shares[0..pss.reconstruct_limit()]);
         print!("lenght is {:?}", indices.len());
-        assert_eq!(positivise(&recovered_secrets, pss.field.0), secrets);
+        assert_eq!(pss.field.decode_slice(recovered_secrets), secrets);
     }
 
     #[test]
@@ -368,8 +357,7 @@ mod old_tests {
         let shares = &shares_sum[0..reconstruct_limit];
         let recovered_secrets = pss.reconstruct(&indices, shares);
 
-        use numtheory::positivise;
-        assert_eq!(positivise(&recovered_secrets, pss.field.0), vec![5, 7, 9]);
+        assert_eq!(pss.field.decode_slice(recovered_secrets), [5, 7, 9]);
     }
 
     #[test]
@@ -391,8 +379,7 @@ mod old_tests {
         let shares = &shares_product[0..reconstruct_limit];
         let recovered_secrets = pss.reconstruct(&indices, shares);
 
-        use numtheory::positivise;
-        assert_eq!(positivise(&recovered_secrets, pss.field.0), vec![4, 10, 18]);
+        assert_eq!(pss.field.decode_slice(recovered_secrets), [4, 10, 18]);
     }
 
 }

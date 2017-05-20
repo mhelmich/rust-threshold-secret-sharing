@@ -11,7 +11,7 @@ extern crate bencher;
 extern crate threshold_secret_sharing as tss;
 
 use bencher::Bencher;
-use tss::fields::*;
+use tss::*;
 
 pub fn bench_add<F>(bencher: &mut Bencher) 
 where F: PrimeField + Encode<u32>, F::P: From<u32>

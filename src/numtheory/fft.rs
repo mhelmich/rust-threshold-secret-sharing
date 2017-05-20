@@ -189,91 +189,77 @@ where F: Field, F::E: Clone
 #[cfg(test)]
 pub mod test {
     use super::*;
-    use ::fields::{Field, PrimeField, Encode, Decode};
-    
-    pub fn from<F>(field: &F, data: &[u32]) -> Vec<F::E> 
-    where F: Field + Encode<u32>, F::E: Clone
-    {
-        data.iter().map(|&x| field.encode(x)).collect()
-    }
-
-    pub fn back<F>(field: &F, data: &[F::E]) -> Vec<u32> 
-    where F: Field + Decode<u32>, F::E: Clone
-    {
-        data.iter().map(|x| field.decode(x)).collect()
-    }
+    use ::fields::*;
 
     pub fn test_fft2<F>()
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
         // field is Z_433 in which 354 is an 8th root of unity
-        let zp = F::new(433.into());
-        let omega = zp.encode(354);
+        let field = F::new(433.into());
+        let omega = field.encode(354);
 
-        let mut data = from(&zp, &[1, 2, 3, 4, 5, 6, 7, 8]);
-        fft2(&zp, &mut data, omega);
-        assert_eq!(back(&zp, &data), [36, 303, 146, 3, 429, 422, 279, 122]);
+        let mut data = field.encode_slice([1, 2, 3, 4, 5, 6, 7, 8]);
+        fft2(&field, &mut data, omega);
+        assert_eq!(field.decode_slice(data), [36, 303, 146, 3, 429, 422, 279, 122]);
     }
 
     pub fn test_fft2_inverse<F>() 
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
         // field is Z_433 in which 354 is an 8th root of unity
-        let zp = F::new(433.into());
-        let omega = zp.encode(354);
+        let field = F::new(433.into());
+        let omega = field.encode(354);
 
-        let mut data = from(&zp, &[36, 303, 146, 3, 429, 422, 279, 122]);
-        fft2_inverse(&zp, &mut *data, omega);
-        assert_eq!(back(&zp, &data), [1, 2, 3, 4, 5, 6, 7, 8])
+        let mut data = field.encode_slice([36, 303, 146, 3, 429, 422, 279, 122]);
+        fft2_inverse(&field, &mut *data, omega);
+        assert_eq!(field.decode_slice(data), [1, 2, 3, 4, 5, 6, 7, 8])
     }
 
     pub fn test_fft2_big<F>() 
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
-        let zp = F::new(5038849.into());
-        let omega = zp.encode(4318906);
+        let field = F::new(5038849.into());
+        let omega = field.encode(4318906);
 
-        let mut data: Vec<_> = (0..256).map(|a| zp.encode(a)).collect();
-        fft2(&zp, &mut *data, omega.clone());
-        fft2_inverse(&zp, &mut data, omega.clone());
-
-        assert_eq!(back(&zp, &data), (0..256).collect::<Vec<_>>());
+        let mut data: Vec<_> = (0..256).map(|a| field.encode(a)).collect();
+        fft2(&field, &mut *data, omega.clone());
+        fft2_inverse(&field, &mut data, omega.clone());
+        assert_eq!(field.decode_slice(data), (0..256).collect::<Vec<_>>());
     }
 
     pub fn test_fft3<F>() 
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
         // field is Z_433 in which 150 is an 9th root of unity
-        let zp = F::new(433.into());
-        let omega = zp.encode(150);
+        let field = F::new(433.into());
+        let omega = field.encode(150);
 
-        let mut data = from(&zp, &[1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        fft3(&zp, &mut data, omega);
-        assert_eq!(back(&zp, &data), [45, 404, 407, 266, 377, 47, 158, 17, 20]);
+        let mut data = field.encode_slice([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        fft3(&field, &mut data, omega);
+        assert_eq!(field.decode_slice(data), [45, 404, 407, 266, 377, 47, 158, 17, 20]);
     }
 
     pub fn test_fft3_inverse<F>() 
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
         // field is Z_433 in which 150 is an 9th root of unity
-        let zp = F::new(433.into());
-        let omega = zp.encode(150);
+        let field = F::new(433.into());
+        let omega = field.encode(150);
 
-        let mut data = from(&zp, &[45, 404, 407, 266, 377, 47, 158, 17, 20]);
-        fft3_inverse(&zp, &mut *data, omega);
-        assert_eq!(back(&zp, &data), [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        let mut data = field.encode_slice([45, 404, 407, 266, 377, 47, 158, 17, 20]);
+        fft3_inverse(&field, &mut *data, omega);
+        assert_eq!(field.decode_slice(data), [1, 2, 3, 4, 5, 6, 7, 8, 9])
     }
 
     pub fn test_fft3_big<F>() 
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
     {
-        let zp = F::new(5038849.into());
-        let omega = zp.encode(1814687);
+        let field = F::new(5038849.into());
+        let omega = field.encode(1814687);
 
-        let mut data: Vec<_> = (0..19683).map(|a| zp.encode(a)).collect();
-        fft3(&zp, &mut data, omega.clone());
-        fft3_inverse(&zp, &mut data, omega.clone());
-
-        assert_eq!(back(&zp, &data), (0..19683).collect::<Vec<_>>());
+        let mut data: Vec<_> = (0..19683).map(|a| field.encode(a)).collect();
+        fft3(&field, &mut data, omega.clone());
+        fft3_inverse(&field, &mut data, omega.clone());
+        assert_eq!(field.decode_slice(data), (0..19683).collect::<Vec<_>>());
     }
 }

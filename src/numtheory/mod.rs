@@ -16,6 +16,7 @@ pub use self::newton::*;
 pub mod lagrange;
 pub use self::lagrange::*;
 
+use std::borrow::Borrow;
 use ::fields::Field;
 use ::fields::Encode;
 
@@ -152,23 +153,16 @@ where F: Field
     acc
 }
 
-/// Map `values` from `[-n/2, n/2)` to `[0, n)`.
-pub fn positivise(values: &[i64], n: i64) -> Vec<i64> {
-    values.iter()
-        .map(|&value| if value < 0 { value + n } else { value })
-        .collect()
-}
-
 /// Evaluate polynomial given by `coefficients` at `point`.
 ///
 /// Current implementation uses Horner's method.
-pub fn mod_evaluate_polynomial<F>(coefficients: &[F::E], point: F::E, field: &F) -> F::E
-where F: Field, F: Encode<u32>, F::E: Clone
+pub fn mod_evaluate_polynomial<F, E>(coefficients: &[F::E], point: E, field: &F) -> F::E
+where F: Field + Encode<u32>, F::E: Clone, E: Borrow<F::E>
 {
     // evaluate using Horner's rule
     //  - to combine with fold we consider the coefficients in reverse order
     coefficients.iter().rev()
-        .fold(field.zero(), |partial, coef| field.add(field.mul(partial, &point), coef))
+        .fold(field.zero(), |partial, coef| field.add(field.mul(partial, point.borrow()), coef))
 }
 
 

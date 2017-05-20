@@ -10,62 +10,7 @@
 extern crate bencher;
 extern crate threshold_secret_sharing as tss;
 
-mod shamir_vs_packed {
-
-    use bencher::Bencher;
-    use tss::shamir::*;
-    use tss::packed::*;
-    use tss::fields::*;
-    
-    // type MyField = NaturalPrimeField<i64>;
-    type MyField = MontgomeryField32;
-    // type MyField = LargePrimeField;
-
-    pub fn bench_100_shamir(b: &mut Bencher) {
-        let field = MyField::new(746497_u32.into());
-        
-        let tss = ShamirSecretSharing {
-            threshold: 155 / 3,
-            share_count: 728 / 3,
-            field: field.clone(),
-        };
-
-        let all_secrets = vec![5 ; 100]
-            .iter().map(|&s| field.encode(s)).collect::<Vec<_>>();
-            
-        b.iter(|| {
-            let _shares: Vec<Vec<_>> = all_secrets.iter()
-                .map(|secret| tss.share(secret.clone()))
-                .collect();
-        });
-    }
-
-    pub fn bench_100_packed(b: &mut Bencher) {
-        let field = MyField::new(746497_u32.into());
-        
-        let pss = PackedSecretSharing {
-            threshold: 155,
-            share_count: 728,
-            secret_count: 100,
-            omega_secrets: field.encode(95660),
-            omega_shares: field.encode(610121),
-            field: field.clone(),
-        };
-        
-        let all_secrets = vec![5 ; 100]
-            .iter().map(|&s| field.encode(s)).collect::<Vec<_>>();
-        
-        b.iter(|| {
-            let _shares = pss.share(&all_secrets);
-        })
-    }
-
-}
-
-benchmark_group!(shamir_vs_packed,
-                 shamir_vs_packed::bench_100_shamir,
-                 shamir_vs_packed::bench_100_packed);
-
+use tss::*;     
 
 mod packed {
 
@@ -111,4 +56,4 @@ benchmark_group!(packed,
                  packed::bench_large_share_count,
                  packed::bench_large_reconstruct);
 
-benchmark_main!(shamir_vs_packed, packed);
+benchmark_main!(packed);

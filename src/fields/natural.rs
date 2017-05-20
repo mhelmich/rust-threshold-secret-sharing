@@ -68,7 +68,7 @@ impl Field for NaturalPrimeField<i64>
     
     fn sample_with_replacement<R: rand::Rng>(&self, count: usize, rng: &mut R) -> Vec<Self::E> {
         use rand::distributions::Sample;
-        let mut range = rand::distributions::range::Range::new(0, self.0 - 1); // TODO why -1?
+        let mut range = rand::distributions::range::Range::new(0, self.0);
         (0..count).map(|_| range.sample(rng)).collect()
     }
 }

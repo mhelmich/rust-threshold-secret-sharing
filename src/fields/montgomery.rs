@@ -17,7 +17,7 @@ use super::{Field, PrimeField, Encode, Decode};
 #[derive(Copy,Clone,Debug)]
 pub struct Value(u32);
 
-/// Implementation of Field with Montgomery modular multiplication.
+/// Implementation of finite field with Montgomery modular multiplication.
 ///
 /// See https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
 /// for general description of the scheme, or
@@ -128,7 +128,7 @@ impl Field for MontgomeryField32
     }
     
     fn pow<A: Borrow<Self::E>>(&self, a: A, e: u32) -> Self::E {
-        // TODO improve
+        // TODO implement more efficient generic GCD
         let mut x = *a.borrow();
         let mut e = e;
         let mut acc = self.one();
@@ -148,7 +148,7 @@ impl Field for MontgomeryField32
     
     fn sample_with_replacement<R: rand::Rng>(&self, count: usize, rng: &mut R) -> Vec<Self::E> {
         use rand::distributions::Sample;
-        let mut range = rand::distributions::range::Range::new(0, self.n - 1); // TODO why -1?
+        let mut range = rand::distributions::range::Range::new(0, self.n);
         (0..count).map(|_| self.encode(range.sample(rng))).collect()
     }
     

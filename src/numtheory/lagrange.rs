@@ -6,7 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
-//! TODO
+//! Algorithms for Lagrange interpolation.
 
 use ::fields::Field;
 
@@ -48,26 +48,37 @@ where F: Field, F::E: Clone
     acc
 }
 
-// TODO
-// #[test]
-// fn lagrange_interpolation_at_zero() {
-//     let prime = 17;
-//     let ref field = ::fields::natural::NaturalPrimeField(prime);
-// 
-//     let poly = [1, 2, 3, 4];
-//     let points: Vec<i64> = vec![5, 6, 7, 8, 9];
-//     let values: Vec<i64> = points.iter()
-//         .map(|&point| ::numtheory::mod_evaluate_polynomial(&poly, point, field))
-//         .collect();
-//     assert_eq!(values, vec![8, 16, 4, 13, 16]);
-// 
-//     let recovered_poly = lagrange_interpolation_at_zero(&points, &values, field);
-//     let recovered_values: Vec<i64> = points.iter()
-//         .map(|&point| newton_evaluate(&recovered_poly, point, field))
-//         .collect();
-//     assert_eq!(recovered_values, values);
-// 
-//     assert_eq!(newton_evaluate(&recovered_poly, 10, field), 3);
-//     assert_eq!(newton_evaluate(&recovered_poly, 11, field), -2);
-//     assert_eq!(newton_evaluate(&recovered_poly, 12, field), 8);
-// }
+#[cfg(test)]
+mod tests {
+    
+    use super::*;
+    use ::fields::*;
+    
+    fn test_lagrange_interpolation_at_zero<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    {
+        let ref field = F::new(17.into());
+
+        let poly = field.encode_slice([4, 3, 2, 1]);
+        let points = field.encode_slice([5, 6, 7, 8, 9]);
+        
+        let values = points.iter()
+            .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point.clone(), field)) // TODO no need to clone
+            .collect::<Vec<_>>();
+            
+        assert_eq!(field.decode_slice(&values), [7, 4, 7, 5, 4]);
+        assert_eq!(field.decode(lagrange_interpolation_at_zero(&points, &values, field)), 4);
+    }
+
+    macro_rules! all_tests {
+        ($field:ty) => {
+            use super::*;
+            #[test] fn test_lagrange_interpolation_at_zero() { super::test_lagrange_interpolation_at_zero::<$field>(); }
+        }
+    }
+    
+    mod natural { all_tests!(NaturalPrimeField<i64>); }
+    mod montgomery { all_tests!(MontgomeryField32); }
+    #[cfg(feature="largefield")] mod large { all_tests!(LargePrimeField); }
+    
+}

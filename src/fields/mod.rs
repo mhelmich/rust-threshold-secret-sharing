@@ -59,6 +59,36 @@ where Self: Field
     fn decode<E: Borrow<Self::E>>(&self, e: E) -> U;
 }
 
+/// Helper trait for encoding values to field elements.
+pub trait SliceEncode<T>
+where Self: Field
+{
+    fn encode_slice<V: AsRef<[T]>>(&self, values: V) -> Vec<Self::E>;
+}
+
+impl<F, T> SliceEncode<T> for F 
+where F: Field + Encode<T>, T: Copy
+{
+    fn encode_slice<V: AsRef<[T]>>(&self, values: V) -> Vec<Self::E> {
+        values.as_ref().iter().map(|&v| self.encode(v)).collect()
+    }
+}
+
+/// Helper trait for decoding field elements to values.
+pub trait SliceDecode<U>
+where Self: Field
+{
+    fn decode_slice<E: AsRef<[Self::E]>>(&self, elements: E) -> Vec<U>;
+}
+
+impl<F, U> SliceDecode<U> for F
+where F: Field + Decode<U>, F::E: Clone
+{
+    fn decode_slice<E: AsRef<[F::E]>>(&self, elements: E) -> Vec<U> {
+        elements.as_ref().iter().map(|e| self.decode(e)).collect()
+    }
+}
+
 
 macro_rules! all_fields_test {
     ($field:ty) => {

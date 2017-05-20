@@ -42,5 +42,9 @@ name = "packed"
 harness = false
 
 [[bench]]
+name = "versus"
+harness = false
+
+[[bench]]
 name = "numtheory"
 harness = false

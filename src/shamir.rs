@@ -24,12 +24,11 @@ use fields::Encode;
 /// # Example:
 ///
 /// ```
-///    use threshold_secret_sharing::shamir;
-///    use threshold_secret_sharing::fields;
-///    let tss = shamir::ShamirSecretSharing {
+///    use threshold_secret_sharing::*;
+///    let tss = ShamirSecretSharing {
 ///        threshold: 9,
 ///        share_count: 20,
-///        field: fields::NaturalPrimeField(41)
+///        field: NaturalPrimeField(41)
 ///    };
 ///
 ///    let secret = 5;

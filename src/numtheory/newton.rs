@@ -6,7 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
-//! TODO
+//! Algorithms for Newton interpolation.
 
 use ::fields::Field;
 
@@ -91,40 +91,55 @@ where F: Field, F::E: Clone
 mod tests {
 
     use super::*;
-    use numtheory;
-    use fields;
+    use ::numtheory;
+    use ::fields::*;
 
-    #[test]
-    fn test_newton_interpolation_general() {
-        let prime = 17;
-        let ref field = fields::NaturalPrimeField(prime);
+    fn test_newton_interpolation_general<F>() 
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    {
+        let ref field = F::new(17.into());
 
-        let poly = [1, 2, 3, 4];
-        let points: Vec<i64> = vec![5, 6, 7, 8, 9];
-        let values: Vec<i64> = points.iter()
-            .map(|&point| numtheory::mod_evaluate_polynomial(&poly, point, field))
-            .collect();
-        assert_eq!(values, vec![8, 16, 4, 13, 16]);
+        let poly = field.encode_slice([1, 2, 3, 4]);
+        let points = field.encode_slice([5, 6, 7, 8, 9]);
+            
+        let values = points.iter()
+            .map(|point| numtheory::mod_evaluate_polynomial(&poly, point, field))
+            .collect::<Vec<_>>();
+        assert_eq!(field.decode_slice(&values), vec![8, 16, 4, 13, 16]);
 
         let recovered_poly = newton_interpolation_general(&points, &values, field);
-        let recovered_values: Vec<i64> = points.iter()
-            .map(|&point| newton_evaluate(&recovered_poly, point, field))
-            .collect();
-        assert_eq!(recovered_values, values);
+        let recovered_values = points.iter()
+            .map(|point| newton_evaluate(&recovered_poly, point.clone(), field)) // TODO no need to clone
+            .collect::<Vec<_>>();
+        assert_eq!(field.decode_slice(recovered_values), field.decode_slice(values));
 
-        assert_eq!(newton_evaluate(&recovered_poly, 10, field), 3);
-        assert_eq!(newton_evaluate(&recovered_poly, 11, field), 15);
-        assert_eq!(newton_evaluate(&recovered_poly, 12, field), 8);
+        assert_eq!(field.decode(newton_evaluate(&recovered_poly, field.encode(10), field)), 3);
+        assert_eq!(field.decode(newton_evaluate(&recovered_poly, field.encode(11), field)), 15);
+        assert_eq!(field.decode(newton_evaluate(&recovered_poly, field.encode(12), field)), 8);
     }
 
-    #[test]
-    fn test_compute_newton_coefficients() {
-        let points = vec![5, 6, 7, 8, 9];
-        let values = vec![8, 16, 4, 13, 16];
-        let field = fields::NaturalPrimeField(17);
+    fn test_compute_newton_coefficients<F>()
+    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    {
+        let ref field = F::new(17.into());
+        
+        let points = field.encode_slice([5, 6, 7, 8, 9]);
+        let values = field.encode_slice([8, 16, 4, 13, 16]);
 
-        let coefficients = compute_newton_coefficients(&points, &values, &field);
-        assert_eq!(coefficients, vec![8, 8, 7, 4, 0]);
+        let coefficients = compute_newton_coefficients(&points, &values, field);
+        assert_eq!(field.decode_slice(coefficients), vec![8, 8, 7, 4, 0]);
     }
+    
+    macro_rules! all_tests {
+        ($field:ty) => {
+            use super::*;
+            #[test] fn test_newton_interpolation_general() { super::test_newton_interpolation_general::<$field>(); }
+            #[test] fn test_compute_newton_coefficients() { super::test_compute_newton_coefficients::<$field>(); }
+        } 
+    }
+    
+    mod natural { all_tests!(NaturalPrimeField<i64>); }
+    mod montgomery { all_tests!(MontgomeryField32); }
+    #[cfg(feature="largefield")] mod large { all_tests!(LargePrimeField); }
     
 }
