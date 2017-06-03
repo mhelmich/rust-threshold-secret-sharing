@@ -92,6 +92,29 @@ where F: Field, F: Encode<u32>, F::E: Clone
         assert_eq!(shares.len(), self.share_count);
         shares
     }
+    
+    pub fn deterministic_share(&self, secrets_and_randomness: &[F::E]) -> Vec<F::E> {
+        let mut values = secrets_and_randomness.to_vec();
+        values.insert(0, self.field.zero());
+        assert_eq!(values.len(), self.reconstruct_limit() + 1);
+        ::numtheory::fft::fft2_inverse(&self.field, &mut *values, self.omega_secrets.clone());
+        let mut poly = values;
+        
+        // TODO unify this with `share`
+        
+        assert_eq!(poly.len(), self.reconstruct_limit() + 1);
+        // .. and extend it (with zeroes)
+        poly.extend(vec![self.field.zero(); self.share_count - self.reconstruct_limit()]);
+        assert_eq!(poly.len(), self.share_count + 1);
+        // evaluate polynomial to generate shares
+        let mut shares = self.evaluate_polynomial(poly);
+        // .. but remove first element since it should not be used as a share (it's always zero)
+        assert!(self.field.eq(&shares[0], self.field.zero()));
+        shares.remove(0);
+        // return
+        assert_eq!(shares.len(), self.share_count);
+        shares
+    }
 
     fn sample_polynomial(&self, secrets: &[F::E]) -> Vec<F::E> {
         assert_eq!(secrets.len(), self.secret_count);
@@ -137,24 +160,80 @@ where F: Field, F: Encode<u32>, F::E: Clone
     pub fn reconstruct(&self, indices: &[u32], shares: &[F::E]) -> Vec<F::E> {
         assert!(shares.len() == indices.len());
         assert!(shares.len() >= self.reconstruct_limit());
-        let mut points: Vec<F::E> = indices.iter()
-            .map(|x| self.field.pow(&self.omega_shares, x + 1))
-            .collect();
-        let mut values = shares.to_vec();
-        // insert missing value for point 1 (zero)
-        points.insert(0, self.field.one());
-        values.insert(0, self.field.zero());
-        // interpolate using Newton's method
-        // TODO optimise by using Newton-equally-space variant
-        let poly = ::numtheory::newton_interpolation_general(&points, &values, &self.field);
-        // evaluate at omega_secrets points to recover secrets
-        // TODO optimise to avoid re-computation of power
-        let secrets = (1..self.reconstruct_limit())
-            .map(|e| self.field.pow(&self.omega_secrets, e as u32))
-            .map(|point| ::numtheory::newton_evaluate(&poly, point, &self.field))
-            .take(self.secret_count)
-            .collect();
-        secrets
+        if shares.len() == self.share_count {
+            // we're in the special case where we can use the FFTs for interpolation
+            let mut values = shares.to_vec();
+            values.insert(0, self.field.zero());
+            ::numtheory::fft::fft3_inverse(&self.field, &mut values, self.omega_shares.clone());
+            let mut coefficients = values.into_iter()
+                .take(self.reconstruct_limit() + 1)
+                .collect::<Vec<_>>();
+            ::numtheory::fft::fft2(&self.field, &mut coefficients, self.omega_secrets.clone());
+            let secrets = coefficients.into_iter()
+                .skip(1)
+                .take(self.secret_count)
+                .collect();
+            secrets
+        } else {
+            // we cannot use the FFT so default to Newton interpolation
+            let mut points: Vec<F::E> = indices.iter()
+                .map(|x| self.field.pow(&self.omega_shares, x + 1))
+                .collect();
+            let mut values = shares.to_vec();
+            // insert missing value for point 1 (zero)
+            points.insert(0, self.field.one());
+            values.insert(0, self.field.zero());
+            // interpolate using Newton's method
+            // TODO optimise by using Newton-equally-space variant
+            let poly = ::numtheory::newton_interpolation_general(&points, &values, &self.field);
+            // evaluate at omega_secrets points to recover secrets
+            // TODO optimise to avoid re-computation of power
+            let secrets = (1..self.reconstruct_limit())
+                .map(|e| self.field.pow(&self.omega_secrets, e as u32))
+                .map(|point| ::numtheory::newton_evaluate(&poly, point, &self.field))
+                .take(self.secret_count)
+                .collect();
+            secrets
+        }
+    }
+    
+    pub fn fully_reconstruct(&self, indices: &[u32], shares: &[F::E]) -> Vec<F::E> {
+        // TODO unify code with `reconstruct` (only difference is how much is removed at end)
+        
+        assert!(shares.len() == indices.len());
+        assert!(shares.len() >= self.reconstruct_limit());
+        if shares.len() == self.share_count {
+            // we're in the special case where we can use the FFTs for interpolation
+            let mut values = shares.to_vec();
+            values.insert(0, self.field.zero());
+            ::numtheory::fft::fft3_inverse(&self.field, &mut values, self.omega_shares.clone());
+            let mut coefficients = values.into_iter()
+                .take(self.reconstruct_limit() + 1)
+                .collect::<Vec<_>>();
+            ::numtheory::fft::fft2(&self.field, &mut coefficients, self.omega_secrets.clone());
+            let mut secrets = coefficients;
+            secrets.remove(0);
+            secrets
+        } else {
+            // we cannot use the FFT so default to Newton interpolation
+            let mut points: Vec<F::E> = indices.iter()
+                .map(|x| self.field.pow(&self.omega_shares, x + 1))
+                .collect();
+            let mut values = shares.to_vec();
+            // insert missing value for point 1 (zero)
+            points.insert(0, self.field.one());
+            values.insert(0, self.field.zero());
+            // interpolate using Newton's method
+            // TODO optimise by using Newton-equally-space variant
+            let poly = ::numtheory::newton_interpolation_general(&points, &values, &self.field);
+            // evaluate at omega_secrets points to recover secrets
+            // TODO optimise to avoid re-computation of power
+            let secrets = (1..self.reconstruct_limit())
+                .map(|e| self.field.pow(&self.omega_secrets, e as u32))
+                .map(|point| ::numtheory::newton_evaluate(&poly, point, &self.field))
+                .collect();
+            secrets
+        }
     }
 }
 

@@ -90,11 +90,10 @@ impl PrimeField for LargePrimeField {
     }
 }
 
-impl<T> Encode<T> for LargePrimeField 
-where ramp::Int: From<T>
+impl<'a> Encode<&'a ramp::Int> for LargePrimeField
 {
-    fn encode(&self, x: T) -> Self::E {
-        let y = ramp::Int::from(x) % &self.0;
+    fn encode(&self, x: &'a ramp::Int) -> Self::E {
+        let y = x % &self.0;
         if y >= 0 {
             y
         } else {
@@ -102,6 +101,64 @@ where ramp::Int: From<T>
         }
     }
 }
+
+impl Encode<ramp::Int> for LargePrimeField
+{
+    fn encode(&self, x: ramp::Int) -> Self::E {
+        self.encode(&x)
+    }
+}
+
+impl<'a> Encode<&'a str> for LargePrimeField
+{    
+    fn encode(&self, x: &'a str) -> Self::E {
+        use std::str::FromStr;
+        self.encode(ramp::Int::from_str(&x).unwrap())
+    }
+}
+
+impl Encode<usize> for LargePrimeField 
+{
+    fn encode(&self, x: usize) -> Self::E {
+        self.encode(ramp::Int::from(x))
+    }
+}
+
+impl Encode<u8> for LargePrimeField 
+{
+    fn encode(&self, x: u8) -> Self::E {
+        self.encode(ramp::Int::from(x))
+    }
+}
+
+impl Encode<u16> for LargePrimeField 
+{
+    fn encode(&self, x: u16) -> Self::E {
+        self.encode(ramp::Int::from(x))
+    }
+}
+
+impl Encode<u32> for LargePrimeField 
+{
+    fn encode(&self, x: u32) -> Self::E {
+        self.encode(ramp::Int::from(x))
+    }
+}
+
+impl Encode<u64> for LargePrimeField 
+{
+    fn encode(&self, x: u64) -> Self::E {
+        self.encode(ramp::Int::from(x))
+    }
+}
+
+// impl<T> Encode<T> for LargePrimeField 
+// where ramp::Int: From<T>
+// {
+//     fn encode(&self, x: T) -> Self::E {
+//         self.encode(ramp::Int::from(x))
+//     }
+// }
 
 impl<U> Decode<U> for LargePrimeField
 where for<'a> U: From<&'a ramp::Int>
