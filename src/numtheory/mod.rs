@@ -154,8 +154,6 @@ where F: Field
 }
 
 /// Evaluate polynomial given by `coefficients` at `point`.
-///
-/// Current implementation uses Horner's method.
 pub fn mod_evaluate_polynomial<F, E>(coefficients: &[F::E], point: E, field: &F) -> F::E
 where F: Field + Encode<u32>, F::E: Clone, E: Borrow<F::E>
 {

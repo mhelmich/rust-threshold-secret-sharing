@@ -17,7 +17,7 @@ pub struct LargePrimeField(ramp::Int);
 
 impl Field for LargePrimeField
 {
-    /// Invariant is that numbers are stored in canonical form in [0..prime).
+    /// Invariant is that numbers are stored in canonical form [0..prime).
     type E = ramp::Int;
 
     fn zero(&self) -> Self::E {
@@ -87,7 +87,7 @@ impl PrimeField for LargePrimeField {
     
     fn new(prime: Self::P) -> Self {
         LargePrimeField(prime)
-    }    
+    }
 }
 
 impl<T> Encode<T> for LargePrimeField 
@@ -103,9 +103,11 @@ where ramp::Int: From<T>
     }
 }
 
-impl Decode<u32> for LargePrimeField {
-    fn decode<E: Borrow<Self::E>>(&self, x: E) -> u32 {
-        u32::from(x.borrow())
+impl<U> Decode<U> for LargePrimeField
+where for<'a> U: From<&'a ramp::Int>
+{
+    fn decode<E: Borrow<Self::E>>(&self, x: E) -> U {
+        U::from(x.borrow())
     }
 }
 

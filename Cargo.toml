@@ -22,13 +22,14 @@ categories = [ "cryptography" ]
 travis-ci = { repository = "snipsco/rust-threshold-secret-sharing" }
 
 [features]
-paramgen = ["primal"]
+paramgen = ["primal", "num-traits"]
 largefield = ["ramp"]
 
 [dependencies]
 rand = "0.3.*"
-primal = { version = "0.2", optional = true }
 ramp = { version = "0.3", optional = true }
+primal = { version = "0.2", optional = true }
+num-traits = { version = "0.1", optional = true }
 
 [dev-dependencies]
 bencher = "0.1"
