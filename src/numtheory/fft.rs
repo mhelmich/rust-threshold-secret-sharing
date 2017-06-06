@@ -188,8 +188,9 @@ where F: Field, F::E: Clone
 
 #[cfg(test)]
 pub mod test {
+    
     use super::*;
-    use ::fields::*;
+    use ::fields::{PrimeField, Encode, Decode, SliceEncode, SliceDecode};
 
     pub fn test_fft2<F>()
     where F: PrimeField + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
@@ -262,4 +263,5 @@ pub mod test {
         fft3_inverse(&field, &mut data, omega.clone());
         assert_eq!(field.decode_slice(data), (0..19683).collect::<Vec<_>>());
     }
+    
 }

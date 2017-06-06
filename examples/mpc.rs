@@ -2,10 +2,6 @@
 
 extern crate threshold_secret_sharing as tss;
 extern crate rand;
-extern crate ramp; // TODO should not need to reference ramp here
-
-use tss::*;
-use std::str::FromStr; // TODO remove
 
 #[cfg(not(feature="largefield"))]
 fn main() {}
@@ -13,6 +9,10 @@ fn main() {}
 #[cfg(feature="largefield")]
 #[allow(non_snake_case)]
 fn main() {
+    
+    use tss::*;
+    use std::str::FromStr; // TODO remove
+    extern crate ramp; // TODO should not need to reference ramp here
 
     let prime = ramp::Int::from_str("2168493841578655774908481580141050902529").unwrap(); // TODO
     let field = LargePrimeField::new(prime);

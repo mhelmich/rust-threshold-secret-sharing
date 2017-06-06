@@ -53,7 +53,7 @@ where F: Field, F::E: Clone
         .fold(field.zero(), |a, b| field.add(a, b))
 }
 
-fn compute_newton_coefficients<F>(points: &[F::E], values: &[F::E], field: &F) -> Vec<F::E> 
+pub fn compute_newton_coefficients<F>(points: &[F::E], values: &[F::E], field: &F) -> Vec<F::E> 
 where F: Field, F::E: Clone
 {
     assert_eq!(points.len(), values.len());
@@ -138,8 +138,8 @@ mod tests {
         } 
     }
     
-    mod natural { all_tests!(NaturalPrimeField<i64>); }
-    mod montgomery { all_tests!(MontgomeryField32); }
-    #[cfg(feature="largefield")] mod large { all_tests!(LargePrimeField); }
+    mod natural { all_tests!(::fields::NaturalPrimeField<i64>); }
+    mod montgomery { all_tests!(::fields::MontgomeryField32); }
+    #[cfg(feature="largefield")] mod large { all_tests!(::fields::LargePrimeField); }
     
 }

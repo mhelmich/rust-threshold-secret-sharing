@@ -77,8 +77,8 @@ mod tests {
         }
     }
     
-    mod natural { all_tests!(NaturalPrimeField<i64>); }
-    mod montgomery { all_tests!(MontgomeryField32); }
-    #[cfg(feature="largefield")] mod large { all_tests!(LargePrimeField); }
+    mod natural { all_tests!(::fields::NaturalPrimeField<i64>); }
+    mod montgomery { all_tests!(::fields::MontgomeryField32); }
+    #[cfg(feature="largefield")] mod large { all_tests!(::fields::LargePrimeField); }
     
 }
