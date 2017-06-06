@@ -93,6 +93,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
         shares
     }
     
+    #[cfg(feature="safety_override")]
     pub fn deterministic_share(&self, secrets_and_randomness: &[F::E]) -> Vec<F::E> {
         let mut values = secrets_and_randomness.to_vec();
         values.insert(0, self.field.zero());
@@ -197,6 +198,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
         }
     }
     
+    #[cfg(feature="safety_override")]
     pub fn fully_reconstruct(&self, indices: &[u32], shares: &[F::E]) -> Vec<F::E> {
         // TODO unify code with `reconstruct` (only difference is how much is removed at end)
         

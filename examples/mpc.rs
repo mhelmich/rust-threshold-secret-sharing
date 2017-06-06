@@ -3,10 +3,10 @@
 extern crate threshold_secret_sharing as tss;
 extern crate rand;
 
-#[cfg(not(feature="largefield"))]
+#[cfg(not(all(feature="largefield", feature="safety_override")))]
 fn main() {}
 
-#[cfg(feature="largefield")]
+#[cfg(all(feature="largefield", feature="safety_override"))]
 #[allow(non_snake_case)]
 fn main() {
     
