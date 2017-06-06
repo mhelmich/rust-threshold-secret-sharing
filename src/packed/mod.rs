@@ -174,6 +174,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
                 .skip(1)
                 .take(self.secret_count)
                 .collect();
+                // TODO replace with truncate
             secrets
         } else {
             // we cannot use the FFT so default to Newton interpolation
