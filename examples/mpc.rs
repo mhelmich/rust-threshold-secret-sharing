@@ -12,7 +12,7 @@ fn main() {
     
     use tss::*;
     use std::str::FromStr; // TODO remove
-    extern crate ramp; // TODO should not need to reference ramp here
+    extern crate framp as ramp; // TODO should not need to reference ramp here
 
     let prime = ramp::Int::from_str("2168493841578655774908481580141050902529").unwrap(); // TODO
     let field = LargePrimeField::new(prime);

@@ -2,7 +2,7 @@
 
 //! Prime field using RAMP as the underlying type.
 
-extern crate ramp;
+extern crate framp as ramp;
 
 use std::borrow::Borrow;
 use rand;
