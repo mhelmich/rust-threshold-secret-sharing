@@ -17,19 +17,19 @@ mod shamir_vs_packed {
     use super::*;
     use bencher::Bencher;
 
-    pub fn bench_100_shamir<F>(b: &mut Bencher) 
+    pub fn share_100_shamir<F>(b: &mut Bencher) 
     where F: PrimeField + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
     {
         let field = F::new(746497.into());
         
         let tss = ShamirSecretSharing {
-            threshold: 155 / 3,
-            share_count: 728 / 3,
+            threshold: 155,
+            share_count: 728,
             field: field.clone(),
         };
 
         let all_secrets = field.encode_slice(vec![5 ; 100]);
-            
+        
         b.iter(|| {
             let _shares: Vec<Vec<_>> = all_secrets.iter()
                 .map(|secret| tss.share(secret.clone()))
@@ -37,7 +37,7 @@ mod shamir_vs_packed {
         });
     }
 
-    pub fn bench_100_packed<F>(b: &mut Bencher) 
+    pub fn share_100_packed<F>(b: &mut Bencher) 
     where F: PrimeField + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
     {
         let field = F::new(746497.into());
@@ -62,20 +62,20 @@ mod shamir_vs_packed {
 
 #[cfg(not(feature="largefield"))]
 benchmark_group!(shamir_vs_packed,
-                 shamir_vs_packed::bench_100_shamir<MontgomeryField32>,
-                 shamir_vs_packed::bench_100_packed<MontgomeryField32>,
-                 shamir_vs_packed::bench_100_shamir<NaturalPrimeField<i64>>,
-                 shamir_vs_packed::bench_100_packed<NaturalPrimeField<i64>>
+                 shamir_vs_packed::share_100_shamir<MontgomeryField32>,
+                 shamir_vs_packed::share_100_packed<MontgomeryField32>,
+                 shamir_vs_packed::share_100_shamir<NaturalPrimeField<i64>>,
+                 shamir_vs_packed::share_100_packed<NaturalPrimeField<i64>>
  );
 
 #[cfg(feature="largefield")]
 benchmark_group!(shamir_vs_packed,
-                 shamir_vs_packed::bench_100_shamir<MontgomeryField32>,
-                 shamir_vs_packed::bench_100_packed<MontgomeryField32>,
-                 shamir_vs_packed::bench_100_shamir<NaturalPrimeField<i64>>,
-                 shamir_vs_packed::bench_100_packed<NaturalPrimeField<i64>>,
-                 shamir_vs_packed::bench_100_shamir<LargePrimeField>,
-                 shamir_vs_packed::bench_100_packed<LargePrimeField>
+                 shamir_vs_packed::share_100_shamir<MontgomeryField32>,
+                 shamir_vs_packed::share_100_packed<MontgomeryField32>,
+                 shamir_vs_packed::share_100_shamir<NaturalPrimeField<i64>>,
+                 shamir_vs_packed::share_100_packed<NaturalPrimeField<i64>>,
+                 shamir_vs_packed::share_100_shamir<LargePrimeField>,
+                 shamir_vs_packed::share_100_packed<LargePrimeField>
  );
 
 benchmark_main!(shamir_vs_packed);
