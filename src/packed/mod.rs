@@ -187,12 +187,12 @@ where F: Field, F: Encode<u32>, F::E: Clone
             values.insert(0, self.field.zero());
             // interpolate using Newton's method
             // TODO optimise by using Newton-equally-space variant
-            let poly = ::numtheory::newton_interpolation_general(&points, &values, &self.field);
+            let poly = ::numtheory::NewtonPolynomial::compute(&points, &values, &self.field);
             // evaluate at omega_secrets points to recover secrets
             // TODO optimise to avoid re-computation of power
             let secrets = (1..self.reconstruct_limit())
                 .map(|e| self.field.pow(&self.omega_secrets, e as u32))
-                .map(|point| ::numtheory::newton_evaluate(&poly, point, &self.field))
+                .map(|point| poly.evaluate(&point, &self.field))
                 .take(self.secret_count)
                 .collect();
             secrets
@@ -228,12 +228,12 @@ where F: Field, F: Encode<u32>, F::E: Clone
             values.insert(0, self.field.zero());
             // interpolate using Newton's method
             // TODO optimise by using Newton-equally-space variant
-            let poly = ::numtheory::newton_interpolation_general(&points, &values, &self.field);
+            let poly = ::numtheory::NewtonPolynomial::compute(&points, &values, &self.field);
             // evaluate at omega_secrets points to recover secrets
             // TODO optimise to avoid re-computation of power
             let secrets = (1..self.reconstruct_limit())
                 .map(|e| self.field.pow(&self.omega_secrets, e as u32))
-                .map(|point| ::numtheory::newton_evaluate(&poly, point, &self.field))
+                .map(|point| poly.evaluate(point, &self.field))
                 .collect();
             secrets
         }
