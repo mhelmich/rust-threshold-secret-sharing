@@ -77,11 +77,7 @@ where F: Field, F::E: Clone
             newton_points.push(product);
         }
         
-        // sum up
-        self.coefficients.iter()
-            .zip(newton_points)
-            .map(|(coef, point)| field.mul(coef, point))
-            .fold(field.zero(), |a, b| field.add(a, b))
+        ::numtheory::weighted_sum(&self.coefficients, &newton_points, field)
     }
 }
 

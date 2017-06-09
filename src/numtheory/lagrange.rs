@@ -40,10 +40,7 @@ impl<F: Field> LagrangeConstants<F>
         let ref constants = self.0;
         assert_eq!(values.len(), constants.len());
         // compute weighted sum
-        values.iter()
-            .zip(constants)
-            .map(|(v, c)| field.mul(v, c))
-            .fold(field.zero(), |a, b| field.add(a, b))
+        ::numtheory::weighted_sum(values, constants, field)
     }
 }
 

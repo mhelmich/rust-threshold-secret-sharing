@@ -35,7 +35,7 @@ impl Config for Medium {
     fn omega_shares() -> u32 { 610121 }
 }
 
-pub fn share_fft<C: Config, F>(b: &mut Bencher) 
+pub fn share_fft_both<C: Config, F>(b: &mut Bencher) 
 where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
     let ref field = F::new(C::prime().into());
@@ -47,8 +47,27 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
     b.iter(|| {
         let mut data = values.clone();
         ::numtheory::fft::fft2_inverse(field, &mut *data, omega_secrets.clone()); // TODO no clone
+        
         data.extend(vec![field.zero(); C::count_shares() - C::count_secrets()]);
         ::numtheory::fft::fft3(field, &mut *data, omega_shares.clone()); // TODO no clone
+    });
+}
+
+pub fn share_fft_sampling<C: Config, F>(b: &mut Bencher) 
+where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+{
+    let ref field = F::new(C::prime().into());
+    let ref omega_secrets = field.encode(C::omega_secrets());
+    
+    let ref values = field.encode_slice(vec![5; C::count_secrets()]);
+    
+    b.iter(|| {
+        let mut data = values.clone();
+        ::numtheory::fft::fft2_inverse(field, &mut *data, omega_secrets.clone()); // TODO no clone
+        
+        let _shares = (1..C::count_shares() as u32+1)
+            .map(|p| ::numtheory::mod_evaluate_polynomial(&data, &field.encode(p), field))
+            .collect::<Vec<_>>();
     });
 }
 
@@ -129,7 +148,8 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 benchmark_group!(small
-    , share_fft          <Small, MontgomeryField32>
+    , share_fft_both     <Small, MontgomeryField32>
+    , share_fft_sampling <Small, MontgomeryField32>
     , share_newton       <Small, MontgomeryField32>
     , share_newton_pre   <Small, MontgomeryField32>
     , share_lagrange     <Small, MontgomeryField32>
@@ -137,7 +157,8 @@ benchmark_group!(small
 );
  
 benchmark_group!(medium
-    , share_fft          <Medium, MontgomeryField32>
+    , share_fft_both     <Medium, MontgomeryField32>
+    , share_fft_sampling <Medium, MontgomeryField32>
     // , share_newton       <Medium, MontgomeryField32>
     , share_newton_pre   <Medium, MontgomeryField32>
     // , share_lagrange     <Medium, MontgomeryField32>
