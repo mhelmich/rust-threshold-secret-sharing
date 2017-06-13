@@ -7,12 +7,17 @@
 // modified, or distributed except according to those terms.
 extern crate threshold_secret_sharing as tss;
 
+use tss::*;
+
 fn main() {
 
-    let ref tss = tss::shamir::ShamirSecretSharing {
+    type MyField = NaturalPrimeField<i64>;
+    let field = MyField::new(41); // any large enough prime will do
+
+    let ref tss = tss::ShamirSecretSharing {
         threshold: 9,
         share_count: 20,
-        prime: 41  // any large enough prime will do
+        field: field,
     };
 
     let secret = 5;

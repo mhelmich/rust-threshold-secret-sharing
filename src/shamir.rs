@@ -10,7 +10,9 @@
 //! for a single secret.
 
 use rand;
-use numtheory::*;
+
+use fields::Field;
+use fields::Encode;
 
 /// Parameters for the Shamir scheme, specifying privacy threshold and total number of shares.
 ///
@@ -22,11 +24,11 @@ use numtheory::*;
 /// # Example:
 ///
 /// ```
-///    use threshold_secret_sharing::shamir;
-///    let tss = shamir::ShamirSecretSharing {
+///    use threshold_secret_sharing::*;
+///    let tss = ShamirSecretSharing {
 ///        threshold: 9,
 ///        share_count: 20,
-///        prime: 41
+///        field: NaturalPrimeField(41)
 ///    };
 ///
 ///    let secret = 5;
@@ -42,23 +44,20 @@ use numtheory::*;
 ///    assert_eq!(recovered_secret, secret);
 /// ```
 #[derive(Debug)]
-pub struct ShamirSecretSharing {
+pub struct ShamirSecretSharing<F>
+where F: Field, F::E: Clone
+{
     /// Maximum number of shares that can be known without exposing the secret.
     pub threshold: usize,
     /// Number of shares to split the secret into.
     pub share_count: usize,
-    /// Prime defining the Zp field in which computation is taking place.
-    pub prime: i64,
+    /// Finite field in which computation takes place.
+    pub field: F,
 }
 
-/// Small preset parameters for tests.
-pub static SHAMIR_5_20: ShamirSecretSharing = ShamirSecretSharing {
-    threshold: 5,
-    share_count: 20,
-    prime: 41,
-};
-
-impl ShamirSecretSharing {
+impl<F> ShamirSecretSharing<F> 
+where F: Field, F: Encode<u32>, F::E: Clone
+{
     /// Minimum number of shares required to reconstruct secret.
     ///
     /// For this scheme this is always `threshold + 1`.
@@ -67,82 +66,100 @@ impl ShamirSecretSharing {
     }
 
     /// Generate `share_count` shares from `secret`.
-    pub fn share(&self, secret: i64) -> Vec<i64> {
+    pub fn share(&self, secret: F::E) -> Vec<F::E> {
         let poly = self.sample_polynomial(secret);
         self.evaluate_polynomial(&poly)
     }
 
-    /// Reconstruct `secret` from a large enough subset of the shares.
-    ///
-    /// `indices` are the ranks of the known shares as output by the `share` method,
-    /// while `values` are the actual values of these shares.
-    /// Both must have the same number of elements, and at least `reconstruct_limit`.
-    pub fn reconstruct(&self, indices: &[usize], shares: &[i64]) -> i64 {
-        assert!(shares.len() == indices.len());
-        assert!(shares.len() >= self.reconstruct_limit());
-        // add one to indices to get points
-        let points: Vec<i64> = indices.iter().map(|&i| (i as i64) + 1i64).collect();
-        lagrange_interpolation_at_zero(&*points, &shares, self.prime)
-    }
-
-    fn sample_polynomial(&self, zero_value: i64) -> Vec<i64> {
+    fn sample_polynomial(&self, zero_value: F::E) -> Vec<F::E> {
         // fix the first coefficient (corresponding to the evaluation at zero)
         let mut coefficients = vec![zero_value];
         // sample the remaining coefficients randomly using secure randomness
-        use rand::distributions::Sample;
-        let mut range = rand::distributions::range::Range::new(0, self.prime - 1);
         let mut rng = rand::OsRng::new().unwrap();
-        let random_coefficients: Vec<i64> =
-            (0..self.threshold).map(|_| range.sample(&mut rng)).collect();
+        let random_coefficients = self.field.sample_with_replacement(self.threshold, &mut rng);
         coefficients.extend(random_coefficients);
         // return
         coefficients
     }
 
-    fn evaluate_polynomial(&self, coefficients: &[i64]) -> Vec<i64> {
+    fn evaluate_polynomial(&self, coefficients: &[F::E]) -> Vec<F::E> {
         // evaluate at all points
         (1..self.share_count + 1)
-            .map(|point| mod_evaluate_polynomial(coefficients, point as i64, self.prime))
+            .map(|point| 
+                ::numtheory::mod_evaluate_polynomial(
+                    coefficients, 
+                    self.field.encode(point as u32),
+                    &self.field))
             .collect()
+    }
+    
+    /// Reconstruct `secret` from a large enough subset of the shares.
+    ///
+    /// `indices` are the ranks of the known shares as output by the `share` method,
+    /// while `values` are the actual values of these shares.
+    /// Both must have the same number of elements, and at least `reconstruct_limit`.
+    pub fn reconstruct(&self, indices: &[usize], shares: &[F::E]) -> F::E {
+        assert!(shares.len() == indices.len());
+        assert!(shares.len() >= self.reconstruct_limit());
+        // add one to indices to get points
+        let points: Vec<F::E> = indices.iter()
+            .map(|&i| self.field.add(self.field.encode(i as u32), self.field.one()))
+            .collect();
+        // interpolate
+        ::numtheory::lagrange_interpolation_at_zero(&*points, &shares, &self.field)
     }
 }
 
 
-#[test]
-fn test_evaluate_polynomial() {
-    let ref tss = SHAMIR_5_20;
-    let poly = vec![1, 2, 0];
-    let values = tss.evaluate_polynomial(&poly);
-    assert_eq!(*values,
-               [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 0]);
-}
+#[cfg(test)]
+mod tests {
 
-#[test]
-fn wikipedia_example() {
-    let tss = ShamirSecretSharing {
-        threshold: 2,
-        share_count: 6,
-        prime: 1613,
+    use super::*;
+    use fields::NaturalPrimeField;
+    
+    // Small preset parameters for tests.
+    pub static SHAMIR_5_20: ShamirSecretSharing<NaturalPrimeField<i64>> = ShamirSecretSharing {
+        threshold: 5,
+        share_count: 20,
+        field: NaturalPrimeField(41),
     };
 
-    let shares = tss.evaluate_polynomial(&[1234, 166, 94]);
-    assert_eq!(&*shares, &[1494, 329, 965, 176, 1188, 775]);
+    #[test]
+    fn test_evaluate_polynomial() {
+        let ref tss = SHAMIR_5_20;
+        let poly = vec![1, 2, 0];
+        let values = tss.evaluate_polynomial(&poly);
+        assert_eq!(*values,
+                   [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 0]);
+    }
 
-    assert_eq!(tss.reconstruct(&[0, 1, 2], &shares[0..3]), 1234);
-    assert_eq!(tss.reconstruct(&[1, 2, 3], &shares[1..4]), 1234);
-    assert_eq!(tss.reconstruct(&[2, 3, 4], &shares[2..5]), 1234);
-}
+    #[test]
+    fn wikipedia_example() {
+        let tss = ShamirSecretSharing {
+            threshold: 2,
+            share_count: 6,
+            field: NaturalPrimeField(1613),
+        };
 
-#[test]
-fn test_shamir() {
-    let tss = ShamirSecretSharing {
-        threshold: 2,
-        share_count: 6,
-        prime: 41,
-    };
-    let secret = 1;
-    let shares = tss.share(secret);
-    assert_eq!(tss.reconstruct(&[0, 1, 2], &shares[0..3]), secret);
-    assert_eq!(tss.reconstruct(&[1, 2, 3], &shares[1..4]), secret);
-    assert_eq!(tss.reconstruct(&[2, 3, 4, 5], &shares[2..6]), secret);
+        let shares = tss.evaluate_polynomial(&[1234, 166, 94]);
+        assert_eq!(&*shares, &[1494, 329, 965, 176, 1188, 775]);
+
+        assert_eq!(tss.reconstruct(&[0, 1, 2], &shares[0..3]), 1234);
+        assert_eq!(tss.reconstruct(&[1, 2, 3], &shares[1..4]), 1234);
+        assert_eq!(tss.reconstruct(&[2, 3, 4], &shares[2..5]), 1234);
+    }
+
+    #[test]
+    fn test_shamir() {
+        let tss = ShamirSecretSharing {
+            threshold: 2,
+            share_count: 6,
+            field: NaturalPrimeField(41),
+        };
+        let secret = 1;
+        let shares = tss.share(secret);
+        assert_eq!(tss.reconstruct(&[0, 1, 2], &shares[0..3]), secret);
+        assert_eq!(tss.reconstruct(&[1, 2, 3], &shares[1..4]), secret);
+        assert_eq!(tss.reconstruct(&[2, 3, 4, 5], &shares[2..6]), secret);
+    }
 }

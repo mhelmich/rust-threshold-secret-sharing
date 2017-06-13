@@ -16,8 +16,10 @@
 extern crate rand;
 
 mod fields;
-mod numtheory;
-pub use numtheory::positivise;
-
-pub mod shamir;
+pub mod numtheory; // only pub because of benches
+mod shamir;
 pub mod packed;
+
+pub use fields::*;
+pub use shamir::ShamirSecretSharing;
+pub use packed::PackedSecretSharing;

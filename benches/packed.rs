@@ -10,41 +10,7 @@
 extern crate bencher;
 extern crate threshold_secret_sharing as tss;
 
-mod shamir_vs_packed {
-
-    use bencher::Bencher;
-    use tss::shamir::*;
-
-    pub fn bench_100_shamir(b: &mut Bencher) {
-        let ref tss = ShamirSecretSharing {
-            threshold: 155 / 3,
-            parts: 728 / 3,
-            prime: 746497,
-        };
-
-        let all_secrets: Vec<i64> = vec![5 ; 100 ];
-        b.iter(|| {
-            let _shares: Vec<Vec<i64>> = all_secrets.iter()
-                .map(|&secret| tss.share(secret))
-                .collect();
-        });
-    }
-
-    pub fn bench_100_packed(b: &mut Bencher) {
-        use tss::packed::*;
-        let ref pss = PSS_155_728_100;
-        let all_secrets: Vec<i64> = vec![5 ; 100];
-        b.iter(|| {
-            let _shares = pss.share(&all_secrets);
-        })
-    }
-
-}
-
-benchmark_group!(shamir_vs_packed,
-                 shamir_vs_packed::bench_100_shamir,
-                 shamir_vs_packed::bench_100_packed);
-
+use tss::*;     
 
 mod packed {
 
@@ -75,7 +41,7 @@ mod packed {
         let all_shares = pss.share(&secrets);
 
         // reconstruct using minimum number of shares required
-        let indices: Vec<usize> = (0..pss.reconstruct_limit()).collect();
+        let indices: Vec<_> = (0..pss.reconstruct_limit() as u32).collect();
         let shares = &all_shares[0..pss.reconstruct_limit()];
 
         b.iter(|| {
@@ -90,4 +56,4 @@ benchmark_group!(packed,
                  packed::bench_large_share_count,
                  packed::bench_large_reconstruct);
 
-benchmark_main!(shamir_vs_packed, packed);
+benchmark_main!(packed);

@@ -8,7 +8,7 @@ fn main() {}
 #[cfg(feature="paramgen")]
 fn main() {
 
-    use tss::packed::PackedSecretSharing;
+    use tss::*;
 
     let threshold = 5; // privacy threshold
     let secret_count = 10; // number of secrets packed together
@@ -20,7 +20,9 @@ fn main() {
     let min_size = 1 << 16;
     // we want a prime field supporting 16 bit numbers
 
-    let ref pss = PackedSecretSharing::new_with_min_size(
+    type MyField = tss::NaturalPrimeField<i64>;
+    // type MyField = tss::fields::MontgomeryField32;
+    let ref pss: PackedSecretSharing<MyField> = PackedSecretSharing::new_with_min_size(
         threshold,
         secret_count,
         share_count,
@@ -39,15 +41,15 @@ fn main() {
     // assert_eq!(pss, expected_pss);
     
     let secrets = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    let shares = pss.share(&secrets);
+    let shares = pss.share(&pss.field.encode_slice(&secrets));
     
-    let indices: Vec<usize> = (0..shares.len()).collect();
+    let indices: Vec<u32> = (0..shares.len() as u32).collect();
     let reconstructed_secrets = pss.reconstruct(&indices, &shares);
     
     // assert_eq!(secrets, reconstructed_secrets);
     // above will likely fail since some values may be `x - prime` instead of `x`
     
-    assert_eq!(secrets, tss::positivise(&reconstructed_secrets, pss.prime));
+    assert_eq!(secrets, pss.field.decode_slice(reconstructed_secrets));
     // the above ensures a canonical representation of numbers in `[0, prime)`
     
 }
