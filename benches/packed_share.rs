@@ -35,7 +35,16 @@ impl Config for Medium {
     fn omega_shares() -> u32 { 610121 }
 }
 
-pub fn share_fft_both<C: Config, F>(b: &mut Bencher) 
+struct Large;
+impl Config for Large {
+    fn prime() -> u32 { 416544769 }
+    fn count_secrets() -> usize { 512 }
+    fn count_shares() -> usize { 2187 }
+    fn omega_secrets() -> u32 { 11641558 }
+    fn omega_shares() -> u32 { 35260261 }
+}
+
+pub fn share_fft_sampling_sharing<C: Config, F>(b: &mut Bencher) 
 where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
     let ref field = F::new(C::prime());
@@ -148,21 +157,31 @@ where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 benchmark_group!(small
-    , share_fft_both     <Small, MontgomeryField32>
-    , share_fft_sampling <Small, MontgomeryField32>
-    , share_newton       <Small, MontgomeryField32>
-    , share_newton_pre   <Small, MontgomeryField32>
-    , share_lagrange     <Small, MontgomeryField32>
-    , share_lagrange_pre <Small, MontgomeryField32>
+    , share_fft_sampling_sharing <Small, MontgomeryField32>
+    , share_fft_sampling         <Small, MontgomeryField32>
+    , share_newton               <Small, MontgomeryField32>
+    , share_newton_pre           <Small, MontgomeryField32>
+    , share_lagrange             <Small, MontgomeryField32>
+    , share_lagrange_pre         <Small, MontgomeryField32>
 );
  
 benchmark_group!(medium
-    , share_fft_both     <Medium, MontgomeryField32>
-    , share_fft_sampling <Medium, MontgomeryField32>
-    // , share_newton       <Medium, MontgomeryField32>
-    , share_newton_pre   <Medium, MontgomeryField32>
-    // , share_lagrange     <Medium, MontgomeryField32>
-    , share_lagrange_pre <Medium, MontgomeryField32>
+    , share_fft_sampling_sharing <Medium, MontgomeryField32>
+    , share_fft_sampling         <Medium, MontgomeryField32>
+    // , share_newton               <Medium, MontgomeryField32>
+    , share_newton_pre           <Medium, MontgomeryField32>
+    // , share_lagrange             <Medium, MontgomeryField32>
+    , share_lagrange_pre         <Medium, MontgomeryField32>
 );
 
-benchmark_main!(small, medium);
+benchmark_group!(large
+    , share_fft_sampling_sharing <Large, MontgomeryField32>
+    , share_lagrange_pre         <Large, MontgomeryField32>
+);
+
+benchmark_main!(
+    // small
+    // medium
+    large
+    // small, medium
+);
