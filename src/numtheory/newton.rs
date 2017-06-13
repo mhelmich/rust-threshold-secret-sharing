@@ -98,9 +98,9 @@ mod tests {
     use ::fields::*;
 
     fn test_newton_interpolation_general<F>() 
-    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let ref field = F::new(17.into());
+        let ref field = F::new(17);
 
         let poly = field.encode_slice([1, 2, 3, 4]);
         let points = field.encode_slice([5, 6, 7, 8, 9]);
@@ -122,9 +122,9 @@ mod tests {
     }
 
     fn test_compute_newton_coefficients<F>()
-    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let ref field = F::new(17.into());
+        let ref field = F::new(17);
         
         let points = field.encode_slice([5, 6, 7, 8, 9]);
         let values = field.encode_slice([8, 16, 4, 13, 16]);
@@ -135,7 +135,6 @@ mod tests {
     
     macro_rules! all_tests {
         ($field:ty) => {
-            use super::*;
             #[test] fn test_newton_interpolation_general() { super::test_newton_interpolation_general::<$field>(); }
             #[test] fn test_compute_newton_coefficients() { super::test_compute_newton_coefficients::<$field>(); }
         } 

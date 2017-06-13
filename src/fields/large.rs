@@ -7,9 +7,7 @@ extern crate framp as ramp;
 use std::borrow::Borrow;
 use rand;
 
-use ::fields::Field;
-use ::fields::PrimeField;
-use ::fields::{Encode, Decode};
+use ::fields::{Field, PrimeField, New, Encode, Decode};
 use ::numtheory::{generic_mod_pow};
 
 #[derive(Clone,Debug,PartialEq)]
@@ -84,11 +82,61 @@ impl Field for LargePrimeField
 
 impl PrimeField for LargePrimeField {
     type P = ramp::Int;
-    
-    fn new(prime: Self::P) -> Self {
+}
+
+
+impl New<ramp::Int> for LargePrimeField {
+    fn new(prime: ramp::Int) -> Self {
         LargePrimeField(prime)
     }
 }
+
+impl<'a> New<&'a ramp::Int> for LargePrimeField {
+    fn new(prime: &'a ramp::Int) -> Self {
+        Self::new(prime.clone())
+    }
+}
+
+impl<'a> New<&'a str> for LargePrimeField {    
+    fn new(prime: &'a str) -> Self {
+        use std::str::FromStr;
+        Self::new(ramp::Int::from_str(&prime).unwrap())
+    }
+}
+
+impl New<usize> for LargePrimeField {
+    fn new(prime: usize) -> Self {
+        Self::new(ramp::Int::from(prime))
+    }
+}
+
+impl New<u8> for LargePrimeField {
+    fn new(prime: u8) -> Self {
+        Self::new(ramp::Int::from(prime))
+    }
+}
+
+impl New<u16> for LargePrimeField 
+{
+    fn new(prime: u16) -> Self {
+        Self::new(ramp::Int::from(prime))
+    }
+}
+
+impl New<u32> for LargePrimeField 
+{
+    fn new(prime: u32) -> Self {
+        Self::new(ramp::Int::from(prime))
+    }
+}
+
+impl New<u64> for LargePrimeField 
+{
+    fn new(prime: u64) -> Self {
+        Self::new(ramp::Int::from(prime))
+    }
+}
+
 
 impl<'a> Encode<&'a ramp::Int> for LargePrimeField
 {

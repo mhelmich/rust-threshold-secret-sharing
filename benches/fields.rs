@@ -14,9 +14,9 @@ use bencher::Bencher;
 use tss::*;
 
 pub fn bench_add<F>(bencher: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>
 {
-    let field = F::new(746497_u32.into());
+    let field = F::new(746497);
     
     let a = field.encode(1231231);
     let b = field.encode(423421);
@@ -27,9 +27,9 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>
 }
 
 pub fn bench_mul<F>(bencher: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>
 {
-    let field = F::new(746497_u32.into());
+    let field = F::new(746497);
     
     let a = field.encode(1231231);
     let b = field.encode(423421);

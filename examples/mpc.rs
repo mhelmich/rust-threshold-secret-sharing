@@ -13,14 +13,11 @@ fn main() {
 fn main() {
     
     use tss::*;
-    use std::str::FromStr; // TODO remove
-    extern crate framp as ramp; // TODO should not need to reference ramp here
 
-    let prime = ramp::Int::from_str("2168493841578655774908481580141050902529").unwrap(); // TODO
-    let field = LargePrimeField::new(prime);
-    
     let n = 1024;
     let m = 2187;
+    
+    let field = LargePrimeField::new("2168493841578655774908481580141050902529");
     let omega_n = field.encode("575568907032575917226189174489221138041");
     let omega_m = field.encode("611000397685398983853362438068827993522");
     

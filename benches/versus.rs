@@ -18,9 +18,9 @@ mod shamir_vs_packed {
     use bencher::Bencher;
 
     pub fn share_100_shamir<F>(b: &mut Bencher) 
-    where F: PrimeField + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let field = F::new(746497.into());
+        let field = F::new(746497);
         
         let tss = ShamirSecretSharing {
             threshold: 155,
@@ -38,9 +38,9 @@ mod shamir_vs_packed {
     }
 
     pub fn share_100_packed<F>(b: &mut Bencher) 
-    where F: PrimeField + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Clone + Encode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let field = F::new(746497.into());
+        let field = F::new(746497);
         
         let pss = PackedSecretSharing {
             threshold: 155,

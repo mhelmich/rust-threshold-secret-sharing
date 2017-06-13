@@ -139,14 +139,14 @@ where F: Field, F: Encode<u32>, F::E: Clone
         // run backward FFT to recover polynomial in coefficient representation
         assert_eq!(values.len(), self.reconstruct_limit() + 1);
         // in-place FFT to turn values into coefficients
-        ::numtheory::fft::fft2_inverse(&self.field, &mut *values, self.omega_secrets.clone());
+        ::numtheory::fft::fft2_inverse(&self.field, &mut *values, &self.omega_secrets);
         let coefficients = values;
         coefficients
     }
 
     fn evaluate_polynomial(&self, mut coefficients: Vec<F::E>) -> Vec<F::E> {
         assert_eq!(coefficients.len(), self.share_count + 1);
-        ::numtheory::fft::fft3(&self.field, &mut coefficients, self.omega_shares.clone());
+        ::numtheory::fft::fft3(&self.field, &mut coefficients, &self.omega_shares);
         let points = coefficients;
         points
     }
@@ -165,11 +165,11 @@ where F: Field, F: Encode<u32>, F::E: Clone
             // we're in the special case where we can use the FFTs for interpolation
             let mut values = shares.to_vec();
             values.insert(0, self.field.zero());
-            ::numtheory::fft::fft3_inverse(&self.field, &mut values, self.omega_shares.clone());
+            ::numtheory::fft::fft3_inverse(&self.field, &mut values, &self.omega_shares);
             let mut coefficients = values.into_iter()
                 .take(self.reconstruct_limit() + 1)
                 .collect::<Vec<_>>();
-            ::numtheory::fft::fft2(&self.field, &mut coefficients, self.omega_secrets.clone());
+            ::numtheory::fft::fft2(&self.field, &mut coefficients, &self.omega_secrets);
             let secrets = coefficients.into_iter()
                 .skip(1)
                 .take(self.secret_count)
@@ -300,9 +300,9 @@ mod tests {
     use ::fields::*;
     
     pub fn test_recover_polynomial<F>()
-    where F: PrimeField + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
     {
-        let field = F::new(433.into());
+        let field = F::new(433);
         let pss = PackedSecretSharing {
             threshold: 4,
             share_count: 8,
@@ -323,9 +323,9 @@ mod tests {
     
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn test_evaluate_polynomial<F>()
-    where F: PrimeField + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
     {
-        let field = F::new(433.into());
+        let field = F::new(433);
         let pss = PackedSecretSharing {
             threshold: 4,
             share_count: 26,
@@ -349,6 +349,7 @@ mod tests {
     
 }
 
+ #[allow(unused_macros)]
 macro_rules! all_packed_tests {
     ($field:ty) => {
         #[test] fn test_recover_polynomial() { ::packed::tests::test_recover_polynomial::<$field>(); }
@@ -380,7 +381,7 @@ mod old_tests {
         // manually recover secrets
         use numtheory::mod_evaluate_polynomial;
         shares.insert(0, 0);
-        ::numtheory::fft::fft3_inverse(field, &mut *shares, pss.omega_shares);
+        ::numtheory::fft::fft3_inverse(field, &mut *shares, &pss.omega_shares);
         let poly = shares;
         let recovered_secrets: Vec<i64> = (1..secrets.len() + 1)
             .map(|i| pss.field.pow(field.encode(pss.omega_secrets as u32), i as u32))

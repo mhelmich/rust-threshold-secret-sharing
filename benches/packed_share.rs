@@ -36,9 +36,9 @@ impl Config for Medium {
 }
 
 pub fn share_fft_both<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     let ref omega_secrets = field.encode(C::omega_secrets());
     let ref omega_shares = field.encode(C::omega_shares());
     
@@ -46,24 +46,24 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
     
     b.iter(|| {
         let mut data = values.clone();
-        ::numtheory::fft::fft2_inverse(field, &mut *data, omega_secrets.clone()); // TODO no clone
+        ::numtheory::fft::fft2_inverse(field, &mut *data, omega_secrets);
         
         data.extend(vec![field.zero(); C::count_shares() - C::count_secrets()]);
-        ::numtheory::fft::fft3(field, &mut *data, omega_shares.clone()); // TODO no clone
+        ::numtheory::fft::fft3(field, &mut *data, omega_shares);
     });
 }
 
 pub fn share_fft_sampling<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     let ref omega_secrets = field.encode(C::omega_secrets());
     
     let ref values = field.encode_slice(vec![5; C::count_secrets()]);
     
     b.iter(|| {
         let mut data = values.clone();
-        ::numtheory::fft::fft2_inverse(field, &mut *data, omega_secrets.clone()); // TODO no clone
+        ::numtheory::fft::fft2_inverse(field, &mut *data, &omega_secrets);
         
         let _shares = (1..C::count_shares() as u32+1)
             .map(|p| ::numtheory::mod_evaluate_polynomial(&data, &field.encode(p), field))
@@ -72,9 +72,9 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 pub fn share_newton<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     
     let ref values = field.encode_slice(vec![5; C::count_secrets()]);
     let ref points = (1..C::count_secrets() as u32+1)
@@ -89,9 +89,9 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 pub fn share_newton_pre<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     
     let ref values = field.encode_slice(vec![5; C::count_secrets()]);
     let ref points = (1..C::count_secrets() as u32+1)
@@ -109,9 +109,9 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 pub fn share_lagrange<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     
     let ref values = field.encode_slice(vec![5; C::count_secrets()]);
     let ref points = (1..C::count_secrets() as u32+1)
@@ -126,9 +126,9 @@ where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
 }
 
 pub fn share_lagrange_pre<C: Config, F>(b: &mut Bencher) 
-where F: PrimeField + Encode<u32>, F::P: From<u32>, F::E: Clone
+where F: PrimeField + New<u32> + Encode<u32>, F::P: From<u32>, F::E: Clone
 {
-    let ref field = F::new(C::prime().into());
+    let ref field = F::new(C::prime());
     
     let ref values = field.encode_slice(vec![5; C::count_secrets()]);
     let ref points = (1..C::count_secrets() as u32+1)

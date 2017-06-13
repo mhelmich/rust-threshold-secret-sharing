@@ -5,9 +5,7 @@
 use rand;
 use std::borrow::Borrow;
 
-use ::fields::Field;
-use ::fields::PrimeField;
-use ::fields::{Encode, Decode};
+use ::fields::{Field, PrimeField, New, Encode, Decode};
 use ::numtheory::{mod_pow, mod_inverse};
 
 #[derive(Clone,Debug,PartialEq)]
@@ -75,8 +73,10 @@ impl Field for NaturalPrimeField<i64>
 
 impl PrimeField for NaturalPrimeField<i64> {
     type P = u32;
-    
-    fn new(prime: Self::P) -> Self {
+}
+
+impl New<u32> for NaturalPrimeField<i64> {
+    fn new(prime: u32) -> Self {
         NaturalPrimeField(prime as i64)
     }
 }

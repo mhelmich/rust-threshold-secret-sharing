@@ -76,15 +76,15 @@ mod tests {
     use ::fields::*;
     
     fn test_interpolation_from_constants<F>()
-    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let ref field = F::new(17.into());
+        let ref field = F::new(17);
 
         let poly = field.encode_slice([4, 3, 2, 1]);
         let points = field.encode_slice([5, 6, 7, 8, 9]);
         
         let values = points.iter()
-            .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point.clone(), field)) // TODO no need to clone
+            .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point, field))
             .collect::<Vec<_>>();
         
         let constants = LagrangeConstants::compute(&field.zero(), &points, field);
@@ -93,15 +93,15 @@ mod tests {
     }
     
     fn test_lagrange_interpolation_at_zero<F>() 
-    where F: PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
     {
-        let ref field = F::new(17.into());
+        let ref field = F::new(17);
 
         let poly = field.encode_slice([4, 3, 2, 1]);
         let points = field.encode_slice([5, 6, 7, 8, 9]);
         
         let values = points.iter()
-            .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point.clone(), field)) // TODO no need to clone
+            .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point, field))
             .collect::<Vec<_>>();
             
         assert_eq!(field.decode_slice(&values), [7, 4, 7, 5, 4]);
@@ -110,7 +110,6 @@ mod tests {
 
     macro_rules! all_tests {
         ($field:ty) => {
-            use super::*;
             #[test] fn test_interpolation_from_constants() { super::test_interpolation_from_constants::<$field>(); }
             #[test] fn test_lagrange_interpolation_at_zero() { super::test_lagrange_interpolation_at_zero::<$field>(); }
         }

@@ -44,7 +44,7 @@ fn main() {
     println!("\nSharing of fourth vector gives random shares S4:\n{:?}", &shares_4);
 
     // multiply shares_1 and shares_2 point-wise
-    let shares_12: Vec<i64> = shares_1.iter().zip(&shares_2).map(|(a, b)| (a * b) % pss.field.0).collect();
+    let shares_12: Vec<i64> = shares_1.iter().zip(&shares_2).map(|(a, b)| pss.field.mul(a, b)).collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_12_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_12_reconstruct_limit as u32).collect();
@@ -59,7 +59,7 @@ fn main() {
     assert_eq!(secrets_12, [4, 10, 18]);
 
     // multiply shares_3 and shares_4 point-wise
-    let shares_34: Vec<i64> = shares_3.iter().zip(&shares_4).map(|(a, b)| (a * b) % pss.field.0).collect();
+    let shares_34: Vec<i64> = shares_3.iter().zip(&shares_4).map(|(a, b)| pss.field.mul(a, b)).collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_34_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_34_reconstruct_limit as u32).collect();
@@ -74,7 +74,7 @@ fn main() {
     assert_eq!(secrets_34, [18, 10, 4]);
 
     // multiply shares_sum12 and shares_34 point-wise
-    let shares_1234product: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| (a * b) % pss.field.0).collect();
+    let shares_1234product: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| pss.field.mul(a, b)).collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_1234product_reconstruct_limit = shares_1234product.len();
     let foo: Vec<u32> = (0..shares_1234product_reconstruct_limit as u32).collect();
@@ -89,7 +89,7 @@ fn main() {
     );
 
     // add shares_12 and shares_34 point-wise
-    let shares_1234sum: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| (a + b) % pss.field.0).collect();
+    let shares_1234sum: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| pss.field.add(a, b)).collect();
     // ... and reconstruct sum, using same reconstruction limit as inputs
     let shares_1234sum_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_1234sum_reconstruct_limit as u32).collect();

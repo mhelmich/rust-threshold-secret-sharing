@@ -11,7 +11,7 @@
 use rand;
 use std::borrow::Borrow;
 
-use super::{Field, PrimeField, Encode, Decode};
+use super::{Field, PrimeField, New, Encode, Decode};
 
 /// MontgomeryField32 Value (wraps an u32 for type-safety).
 #[derive(Copy,Clone,Debug)]
@@ -43,11 +43,12 @@ impl MontgomeryField32 {
    }
 }
 
-impl PrimeField for MontgomeryField32 
-{
+impl PrimeField for MontgomeryField32 {
     type P = u32;
-    
-    fn new(prime: u32) -> MontgomeryField32 {
+}
+
+impl New<u32> for MontgomeryField32 {
+    fn new(prime: u32) -> Self {
         let r = 1u64 << 32;
         let tmp = ::numtheory::mod_inverse(r as i64, prime as i64);
         let r_inv = if tmp < 0 {

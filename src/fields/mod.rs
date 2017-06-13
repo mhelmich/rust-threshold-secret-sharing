@@ -43,8 +43,12 @@ pub trait Field
 pub trait PrimeField : Field
 {
     type P;
-    
-    fn new(prime: Self::P) -> Self;
+}
+
+pub trait New<T>
+where Self: Field
+{
+    fn new(params: T) -> Self;
 }
 
 pub trait Encode<T>
@@ -89,7 +93,7 @@ where F: Field + Decode<U>, F::E: Clone
     }
 }
 
-
+#[allow(unused_macros)]
 macro_rules! all_fields_test {
     ($field:ty) => {
         #[test] fn test_convert() { ::fields::test::test_convert::<$field>(); }
@@ -111,42 +115,42 @@ pub mod test {
     use super::*;
     
     pub fn test_convert<F>() 
-    where F: Field + PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>
+    where F: Field + PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>
     {
-        let zp = F::new(17.into());
+        let zp = F::new(17);
         for i in 0_u32..20 {
             assert_eq!(zp.decode(zp.encode(i)), i % 17);
         }
     }
 
     pub fn test_add<F>() 
-    where F: Field + PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>
+    where F: Field + PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>
     {
-        let zp = F::new(17.into());
+        let zp = F::new(17);
         assert_eq!(zp.decode(zp.add(zp.encode(8), zp.encode(2))), 10);
         assert_eq!(zp.decode(zp.add(zp.encode(8), zp.encode(13))), 4);
     }
 
     pub fn test_sub<F>() 
-    where F: Field + PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>
+    where F: Field + PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>
     {
-        let zp = F::new(17.into());
+        let zp = F::new(17);
         assert_eq!(zp.decode(zp.sub(zp.encode(8), zp.encode(2))), 6);
         assert_eq!(zp.decode(zp.sub(zp.encode(8), zp.encode(13))), 12);
     }
 
     pub fn test_mul<F>() 
-    where F: Field + PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>
+    where F: Field + PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>
     {
-        let zp = F::new(17.into());
+        let zp = F::new(17);
         assert_eq!(zp.decode(zp.mul(zp.encode(8), zp.encode(2))), (8 * 2) % 17);
         assert_eq!(zp.decode(zp.mul(zp.encode(8), zp.encode(5))), (8 * 5) % 17);
     }
 
     pub fn test_pow<F>() 
-    where F: Field + PrimeField + Encode<u32> + Decode<u32>, F::P: From<u32>
+    where F: Field + PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>
     {
-        let zp = F::new(17.into());
+        let zp = F::new(17);
         assert_eq!(zp.decode(zp.pow(zp.encode(2), 0)), 1);
         assert_eq!(zp.decode(zp.pow(zp.encode(2), 3)), 8);
         assert_eq!(zp.decode(zp.pow(zp.encode(2), 6)), 13);

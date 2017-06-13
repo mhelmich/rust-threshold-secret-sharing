@@ -98,7 +98,6 @@ pub fn mod_inverse(k: i64, prime: i64) -> i64 {
 mod tests {
     
     use super::*;
-    use fields;
     
     #[test]
     fn test_gcd() {
