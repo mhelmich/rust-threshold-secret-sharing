@@ -98,7 +98,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
         let mut values = secrets_and_randomness.to_vec();
         values.insert(0, self.field.zero());
         assert_eq!(values.len(), self.reconstruct_limit() + 1);
-        ::numtheory::fft::fft2_inverse(&self.field, &mut *values, self.omega_secrets.clone());
+        ::numtheory::fft::fft2_inverse(&self.field, &mut *values, &self.omega_secrets);
         let mut poly = values;
         
         // TODO unify this with `share`
@@ -209,11 +209,11 @@ where F: Field, F: Encode<u32>, F::E: Clone
             // we're in the special case where we can use the FFTs for interpolation
             let mut values = shares.to_vec();
             values.insert(0, self.field.zero());
-            ::numtheory::fft::fft3_inverse(&self.field, &mut values, self.omega_shares.clone());
+            ::numtheory::fft::fft3_inverse(&self.field, &mut values, &self.omega_shares);
             let mut coefficients = values.into_iter()
                 .take(self.reconstruct_limit() + 1)
                 .collect::<Vec<_>>();
-            ::numtheory::fft::fft2(&self.field, &mut coefficients, self.omega_secrets.clone());
+            ::numtheory::fft::fft2(&self.field, &mut coefficients, &self.omega_secrets);
             let mut secrets = coefficients;
             secrets.remove(0);
             secrets
