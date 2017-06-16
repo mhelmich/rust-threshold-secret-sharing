@@ -13,6 +13,7 @@ pub fn gcd(a: i64, b: i64) -> (i64, i64, i64) {
     }
 }
 
+// TODO see exercise 4.10 in Shoup
 pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
     
     // simple cases

@@ -54,3 +54,7 @@ harness = false
 [[bench]]
 name = "numtheory"
 harness = false
+
+[[bench]]
+name = "mpc"
+harness = false
