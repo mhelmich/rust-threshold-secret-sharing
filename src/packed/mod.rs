@@ -359,7 +359,8 @@ macro_rules! all_packed_tests {
 
 #[cfg(test)] mod natural    { all_packed_tests!(::fields::NaturalPrimeField<i64>); }
 #[cfg(test)] mod montgomery { all_packed_tests!(::fields::MontgomeryField32); }
-#[cfg(all(test, feature="largefield"))] mod large { all_packed_tests!(::fields::LargePrimeField); }
+#[cfg(all(test, feature="largefield_ramp"))] mod large { all_packed_tests!(::fields::LargePrimeField); }
+#[cfg(all(test, feature="largefield_gmp"))]  mod large { all_packed_tests!(::fields::LargePrimeField); }
 
 
 #[cfg(test)]

@@ -117,6 +117,7 @@ mod tests {
     
     mod natural { all_tests!(::fields::NaturalPrimeField<i64>); }
     mod montgomery { all_tests!(::fields::MontgomeryField32); }
-    #[cfg(feature="largefield")] mod large { all_tests!(::fields::LargePrimeField); }
+    #[cfg(feature="largefield_ramp")] mod large { all_tests!(::fields::LargePrimeField); }
+    #[cfg(feature="largefield_gmp")] mod large { all_tests!(::fields::LargePrimeField); }
     
 }

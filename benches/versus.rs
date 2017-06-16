@@ -60,7 +60,7 @@ mod shamir_vs_packed {
 
 }
 
-#[cfg(not(feature="largefield"))]
+#[cfg(not(any(feature="largefield_ramp", feature="largefield_gmp")))]
 benchmark_group!(shamir_vs_packed,
                  shamir_vs_packed::share_100_shamir<MontgomeryField32>,
                  shamir_vs_packed::share_100_packed<MontgomeryField32>,
@@ -68,7 +68,7 @@ benchmark_group!(shamir_vs_packed,
                  shamir_vs_packed::share_100_packed<NaturalPrimeField<i64>>
  );
 
-#[cfg(feature="largefield")]
+#[cfg(any(feature="largefield_ramp", feature="largefield_gmp"))]
 benchmark_group!(shamir_vs_packed,
                  shamir_vs_packed::share_100_shamir<MontgomeryField32>,
                  shamir_vs_packed::share_100_packed<MontgomeryField32>,

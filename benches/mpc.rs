@@ -63,7 +63,7 @@ pub fn bench_share<C: Config>(b: &mut Bencher)
         field: field.clone(),
     };
     
-    let secrets = field.encode_slice((0..secret_count).collect::<Vec<_>>());
+    let secrets = field.encode_slice((0..secret_count as u32).collect::<Vec<_>>());
     
     b.iter(|| {
         let _shares = pss.share(&secrets);

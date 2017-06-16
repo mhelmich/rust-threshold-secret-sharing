@@ -3,12 +3,18 @@
 extern crate threshold_secret_sharing as tss;
 extern crate rand;
 
-#[cfg(not(all(feature="largefield", feature="safety_override")))]
+#[cfg(not(
+    all(feature="safety_override",
+        any(feature="largefield_ramp", feature="largefield_gmp")
+    )))]
 fn main() {
     println!("Please run with '--features \"largefield safety_override\"'");
 }
 
-#[cfg(all(feature="largefield", feature="safety_override"))]
+#[cfg(
+    all(feature="safety_override",
+        any(feature="largefield_ramp", feature="largefield_gmp")
+    ))]
 #[allow(non_snake_case)]
 fn main() {
     
