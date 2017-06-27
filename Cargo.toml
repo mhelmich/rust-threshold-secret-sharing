@@ -48,6 +48,10 @@ name = "versus"
 harness = false
 
 [[bench]]
+name = "shamir_share"
+harness = false
+
+[[bench]]
 name = "packed_share"
 harness = false
 
