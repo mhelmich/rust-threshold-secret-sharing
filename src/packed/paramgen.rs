@@ -1,4 +1,3 @@
-
 #![doc(hidden)]
 
 //! Optional helper methods for parameter generation
@@ -6,9 +5,9 @@
 extern crate num_traits;
 extern crate primal;
 
+use self::num_traits::{One, Zero};
 use std::borrow::Borrow;
 use std::ops::*;
-use self::num_traits::{Zero, One};
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 fn check_prime_form<I, J: Borrow<I>>(min_p: J, n: J, m: J, p: J) -> bool 
@@ -34,7 +33,12 @@ where
 
 #[test]
 fn test_check_prime_form() {
-    assert_eq!(primal::Primes::all().find(|p| check_prime_form(198, 8, 9, *p)).unwrap(), 433);
+    assert_eq!(
+        primal::Primes::all()
+            .find(|p| check_prime_form(198, 8, 9, *p))
+            .unwrap(),
+        433
+    );
 }
 
 fn factor(p: usize) -> Vec<usize> {
@@ -57,14 +61,16 @@ fn test_factor() {
 
 fn find_field(min_p: usize, n: usize, m: usize) -> Option<(i64, i64)> {
     // find prime of right form
-    let p = primal::Primes::all().find(|p| check_prime_form(min_p, n, m, *p)).unwrap();
+    let p = primal::Primes::all()
+        .find(|p| check_prime_form(min_p, n, m, *p))
+        .unwrap();
     // find (any) generator
     let factors = factor(p - 1);
     for g in 2..p {
         // test generator against all factors of p-1
         let is_generator = factors.iter().all(|f| {
             let e = (p - 1) / f;
-            ::numtheory::mod_pow(g as i64, e as u32, p as i64) != 1  // TODO check for negative value
+            ::numtheory::mod_pow(g as i64, e as u32, p as i64) != 1 // TODO check for negative value
         });
         // return
         if is_generator {
@@ -77,10 +83,22 @@ fn find_field(min_p: usize, n: usize, m: usize) -> Option<(i64, i64)> {
 
 #[test]
 fn test_find_field() {
-    assert_eq!(find_field(198, 2usize.pow(3), 3usize.pow(2)).unwrap(), (433, 5));
-    assert_eq!(find_field(198, 2usize.pow(3), 3usize.pow(3)).unwrap(), (433, 5));
-    assert_eq!(find_field(198, 2usize.pow(8), 3usize.pow(6)).unwrap(), (746497, 5));
-    assert_eq!(find_field(198, 2usize.pow(8), 3usize.pow(9)).unwrap(), (5038849, 29));
+    assert_eq!(
+        find_field(198, 2usize.pow(3), 3usize.pow(2)).unwrap(),
+        (433, 5)
+    );
+    assert_eq!(
+        find_field(198, 2usize.pow(3), 3usize.pow(3)).unwrap(),
+        (433, 5)
+    );
+    assert_eq!(
+        find_field(198, 2usize.pow(8), 3usize.pow(6)).unwrap(),
+        (746497, 5)
+    );
+    assert_eq!(
+        find_field(198, 2usize.pow(8), 3usize.pow(9)).unwrap(),
+        (5038849, 29)
+    );
 
     // assert_eq!(find_field(198, 2usize.pow(11), 3usize.pow(8)).unwrap(), (120932353, 5));
     // assert_eq!(find_field(198, 2usize.pow(13), 3usize.pow(9)).unwrap(), (483729409, 23));
@@ -108,8 +126,14 @@ pub fn generate_parameters(min_size: usize, n: usize, m: usize) -> (i64, i64, i6
 
 #[test]
 fn test_generate_parameters() {
-    assert_eq!(generate_parameters(200, 2usize.pow(3), 3usize.pow(2)), (433, 354, 150));
-    assert_eq!(generate_parameters(200, 2usize.pow(3), 3usize.pow(3)), (433, 354, 17));
+    assert_eq!(
+        generate_parameters(200, 2usize.pow(3), 3usize.pow(2)),
+        (433, 354, 150)
+    );
+    assert_eq!(
+        generate_parameters(200, 2usize.pow(3), 3usize.pow(3)),
+        (433, 354, 17)
+    );
 }
 
 fn is_power_of(x: usize, e: usize) -> bool {
@@ -134,28 +158,31 @@ fn test_is_power_of() {
 }
 
 use super::*;
-use ::fields::PrimeField;
+use fields::PrimeField;
 
-impl<F> PackedSecretSharing<F> 
-where F: PrimeField, F: Encode<u32>, F::P: From<u32>
+impl<F> PackedSecretSharing<F>
+where
+    F: PrimeField,
+    F: Encode<u32>,
+    F::P: From<u32>,
 {
-
     /// Find suitable parameters with as small a prime field as possible.
-    pub fn new(threshold: usize,
-               secret_count: usize,
-               share_count: usize)
-               -> PackedSecretSharing<F> {
+    pub fn new(
+        threshold: usize,
+        secret_count: usize,
+        share_count: usize,
+    ) -> PackedSecretSharing<F> {
         let min_size = share_count + secret_count + threshold + 1;
         Self::new_with_min_size(threshold, secret_count, share_count, min_size)
     }
 
     /// Find suitable parameters with a prime field of at least the specified size.
-    pub fn new_with_min_size(threshold: usize,
-                             secret_count: usize,
-                             share_count: usize,
-                             min_size: usize)
-                             -> PackedSecretSharing<F> {
-
+    pub fn new_with_min_size(
+        threshold: usize,
+        secret_count: usize,
+        share_count: usize,
+        min_size: usize,
+    ) -> PackedSecretSharing<F> {
         let m = threshold + secret_count + 1;
         let n = share_count + 1;
         assert!(is_power_of(m, 2));
@@ -163,7 +190,7 @@ where F: PrimeField, F: Encode<u32>, F::P: From<u32>
         assert!(min_size >= share_count + secret_count + threshold + 1);
 
         let (prime, omega_secrets, omega_shares) = generate_parameters(min_size, m, n);
-        
+
         let field = F::new((prime as u32).into());
         PackedSecretSharing {
             threshold: threshold,
@@ -178,7 +205,16 @@ where F: PrimeField, F: Encode<u32>, F::P: From<u32>
 
 #[test]
 fn test_new() {
-    assert_eq!(PackedSecretSharing::new(155, 100, 728), super::PSS_155_728_100);
-    assert_eq!(PackedSecretSharing::new_with_min_size(4, 3, 8, 200), super::PSS_4_8_3);
-    assert_eq!(PackedSecretSharing::new_with_min_size(4, 3, 26, 200), super::PSS_4_26_3);
+    assert_eq!(
+        PackedSecretSharing::new(155, 100, 728),
+        super::PSS_155_728_100
+    );
+    assert_eq!(
+        PackedSecretSharing::new_with_min_size(4, 3, 8, 200),
+        super::PSS_4_8_3
+    );
+    assert_eq!(
+        PackedSecretSharing::new_with_min_size(4, 3, 26, 200),
+        super::PSS_4_26_3
+    );
 }

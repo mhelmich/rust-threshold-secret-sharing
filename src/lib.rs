@@ -17,9 +17,9 @@ extern crate rand;
 
 mod fields;
 pub mod numtheory; // only pub because of benches
-mod shamir;
 pub mod packed;
+mod shamir;
 
 pub use fields::*;
-pub use shamir::ShamirSecretSharing;
 pub use packed::PackedSecretSharing;
+pub use shamir::ShamirSecretSharing;

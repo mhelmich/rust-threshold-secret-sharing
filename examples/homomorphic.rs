@@ -10,9 +10,9 @@ extern crate threshold_secret_sharing as tss;
 use tss::*;
 
 fn main() {
-
     let ref pss = tss::packed::PSS_4_26_3;
-    println!("\
+    println!(
+        "\
     Using parameters that: \n \
      - allow {} values to be packed together \n \
      - give a security threshold of {} \n \
@@ -35,16 +35,32 @@ fn main() {
 
     // secret share inputs
     let shares_1 = pss.share(&secrets_1);
-    println!("\nSharing of first vector gives random shares S1:\n{:?}", &shares_1);
+    println!(
+        "\nSharing of first vector gives random shares S1:\n{:?}",
+        &shares_1
+    );
     let shares_2 = pss.share(&secrets_2);
-    println!("\nSharing of second vector gives random shares S2:\n{:?}", &shares_2);
+    println!(
+        "\nSharing of second vector gives random shares S2:\n{:?}",
+        &shares_2
+    );
     let shares_3 = pss.share(&secrets_3);
-    println!("\nSharing of third vector gives random shares S3:\n{:?}", &shares_3);
+    println!(
+        "\nSharing of third vector gives random shares S3:\n{:?}",
+        &shares_3
+    );
     let shares_4 = pss.share(&secrets_4);
-    println!("\nSharing of fourth vector gives random shares S4:\n{:?}", &shares_4);
+    println!(
+        "\nSharing of fourth vector gives random shares S4:\n{:?}",
+        &shares_4
+    );
 
     // multiply shares_1 and shares_2 point-wise
-    let shares_12: Vec<i64> = shares_1.iter().zip(&shares_2).map(|(a, b)| pss.field.mul(a, b)).collect();
+    let shares_12: Vec<i64> = shares_1
+        .iter()
+        .zip(&shares_2)
+        .map(|(a, b)| pss.field.mul(a, b))
+        .collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_12_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_12_reconstruct_limit as u32).collect();
@@ -53,13 +69,16 @@ fn main() {
     println!(
         "\nMultiplying shares S1 and S2 point-wise gives new shares S12 which \
         can be reconstructed (using {} of them) to give output vector: {:?}",
-        shares_12_reconstruct_limit,
-        secrets_12
+        shares_12_reconstruct_limit, secrets_12
     );
     assert_eq!(secrets_12, [4, 10, 18]);
 
     // multiply shares_3 and shares_4 point-wise
-    let shares_34: Vec<i64> = shares_3.iter().zip(&shares_4).map(|(a, b)| pss.field.mul(a, b)).collect();
+    let shares_34: Vec<i64> = shares_3
+        .iter()
+        .zip(&shares_4)
+        .map(|(a, b)| pss.field.mul(a, b))
+        .collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_34_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_34_reconstruct_limit as u32).collect();
@@ -68,13 +87,16 @@ fn main() {
     println!(
         "\nLikewise, multiplying shares S3 and S4 point-wise gives new shares S34 \
         which can be reconstructed (using {} of them) to give output vector: {:?}",
-        shares_34_reconstruct_limit,
-        secrets_34
+        shares_34_reconstruct_limit, secrets_34
     );
     assert_eq!(secrets_34, [18, 10, 4]);
 
     // multiply shares_sum12 and shares_34 point-wise
-    let shares_1234product: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| pss.field.mul(a, b)).collect();
+    let shares_1234product: Vec<i64> = shares_12
+        .iter()
+        .zip(&shares_34)
+        .map(|(a, b)| pss.field.mul(a, b))
+        .collect();
     // ... and reconstruct product, using double reconstruction limit
     let shares_1234product_reconstruct_limit = shares_1234product.len();
     let foo: Vec<u32> = (0..shares_1234product_reconstruct_limit as u32).collect();
@@ -84,12 +106,15 @@ fn main() {
         "\nIf we continue multiplying these new shares S12 and S34 then we no longer \
         have enough shares to reconstruct correctly; using all {} shares gives incorrect (random) \
         output: {:?}",
-        shares_1234product_reconstruct_limit,
-        secrets_1234product
+        shares_1234product_reconstruct_limit, secrets_1234product
     );
 
     // add shares_12 and shares_34 point-wise
-    let shares_1234sum: Vec<i64> = shares_12.iter().zip(&shares_34).map(|(a, b)| pss.field.add(a, b)).collect();
+    let shares_1234sum: Vec<i64> = shares_12
+        .iter()
+        .zip(&shares_34)
+        .map(|(a, b)| pss.field.add(a, b))
+        .collect();
     // ... and reconstruct sum, using same reconstruction limit as inputs
     let shares_1234sum_reconstruct_limit = pss.reconstruct_limit() * 2;
     let foo: Vec<u32> = (0..shares_1234sum_reconstruct_limit as u32).collect();
@@ -98,9 +123,7 @@ fn main() {
     println!(
         "\nHowever, adding shares S12 and S34 point-wise doesn't increase the \
         reconstruction limit and hence using {} shares we can still recover their sum: {:?}",
-        shares_1234sum_reconstruct_limit,
-        secrets_1234sum
+        shares_1234sum_reconstruct_limit, secrets_1234sum
     );
     assert_eq!(secrets_1234sum, [22, 20, 22]);
-
 }

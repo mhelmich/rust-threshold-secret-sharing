@@ -8,12 +8,11 @@
 
 //! Algorithms for Lagrange interpolation.
 
-use ::fields::Field;
+use fields::Field;
 
 pub struct LagrangeConstants<F: Field>(Vec<F::E>);
 
-impl<F: Field> LagrangeConstants<F> 
-{
+impl<F: Field> LagrangeConstants<F> {
     pub fn compute(point: &F::E, points: &[F::E], field: &F) -> LagrangeConstants<F> {
         let mut constants = Vec::with_capacity(points.len());
         for i in 0..points.len() {
@@ -30,11 +29,11 @@ impl<F: Field> LagrangeConstants<F>
             let coef = field.mul(num, field.inv(denum));
             constants.push(coef);
         }
-        
+
         LagrangeConstants(constants)
     }
-    
-    /// Note that care must be taken to provide the same `field` as the one used 
+
+    /// Note that care must be taken to provide the same `field` as the one used
     /// for computing the constants!
     pub fn interpolate(&self, values: &[F::E], field: &F) -> F::E {
         let ref constants = self.0;
@@ -49,8 +48,15 @@ impl<F: Field> LagrangeConstants<F>
 ///
 /// `points` and `values` are expected to be two arrays of the same size, containing
 /// respectively the evaluation points (x) and the value of the polynomial at those point (p(x)).
-pub fn lagrange_interpolation_at_point<F>(point: &F::E, points: &[F::E], values: &[F::E], field: &F) -> F::E
-where F: Field, F::E: Clone
+pub fn lagrange_interpolation_at_point<F>(
+    point: &F::E,
+    points: &[F::E],
+    values: &[F::E],
+    field: &F,
+) -> F::E
+where
+    F: Field,
+    F::E: Clone,
 {
     assert_eq!(points.len(), values.len());
     let constants = LagrangeConstants::compute(point, points, field);
@@ -64,59 +70,84 @@ where F: Field, F::E: Clone
 /// `points` and `values` are expected to be two arrays of the same size, containing
 /// respectively the evaluation points (x) and the value of the polynomial at those point (p(x)).
 pub fn lagrange_interpolation_at_zero<F>(points: &[F::E], values: &[F::E], field: &F) -> F::E
-where F: Field, F::E: Clone
+where
+    F: Field,
+    F::E: Clone,
 {
     lagrange_interpolation_at_point(&field.zero(), points, values, field)
 }
 
 #[cfg(test)]
 mod tests {
-    
+
     use super::*;
-    use ::fields::*;
-    
+    use fields::*;
+
     fn test_interpolation_from_constants<F>()
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::P: From<u32>,
+        F::E: Clone,
     {
         let ref field = F::new(17);
 
         let poly = field.encode_slice([4, 3, 2, 1]);
         let points = field.encode_slice([5, 6, 7, 8, 9]);
-        
-        let values = points.iter()
+
+        let values = points
+            .iter()
             .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point, field))
             .collect::<Vec<_>>();
-        
+
         let constants = LagrangeConstants::compute(&field.zero(), &points, field);
         let value = constants.interpolate(&values, field);
         assert_eq!(field.decode(value), 4);
     }
-    
-    fn test_lagrange_interpolation_at_zero<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::P: From<u32>, F::E: Clone
+
+    fn test_lagrange_interpolation_at_zero<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::P: From<u32>,
+        F::E: Clone,
     {
         let ref field = F::new(17);
 
         let poly = field.encode_slice([4, 3, 2, 1]);
         let points = field.encode_slice([5, 6, 7, 8, 9]);
-        
-        let values = points.iter()
+
+        let values = points
+            .iter()
             .map(|point| ::numtheory::mod_evaluate_polynomial(&poly, point, field))
             .collect::<Vec<_>>();
-            
+
         assert_eq!(field.decode_slice(&values), [7, 4, 7, 5, 4]);
-        assert_eq!(field.decode(lagrange_interpolation_at_zero(&points, &values, field)), 4);
+        assert_eq!(
+            field.decode(lagrange_interpolation_at_zero(&points, &values, field)),
+            4
+        );
     }
 
     macro_rules! all_tests {
         ($field:ty) => {
-            #[test] fn test_interpolation_from_constants() { super::test_interpolation_from_constants::<$field>(); }
-            #[test] fn test_lagrange_interpolation_at_zero() { super::test_lagrange_interpolation_at_zero::<$field>(); }
-        }
+            #[test]
+            fn test_interpolation_from_constants() {
+                super::test_interpolation_from_constants::<$field>();
+            }
+            #[test]
+            fn test_lagrange_interpolation_at_zero() {
+                super::test_lagrange_interpolation_at_zero::<$field>();
+            }
+        };
     }
-    
-    mod natural { all_tests!(::fields::NaturalPrimeField<i64>); }
-    mod montgomery { all_tests!(::fields::MontgomeryField32); }
-    #[cfg(feature="largefield")] mod large { all_tests!(::fields::LargePrimeField); }
-    
+
+    mod natural {
+        all_tests!(::fields::NaturalPrimeField<i64>);
+    }
+    mod montgomery {
+        all_tests!(::fields::MontgomeryField32);
+    }
+    #[cfg(feature = "largefield")]
+    mod large {
+        all_tests!(::fields::LargePrimeField);
+    }
 }

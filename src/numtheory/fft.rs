@@ -9,8 +9,8 @@
 //! This module implements in-place 2-radix and 3-radix numeric theory
 //! transformations (FFT on modular fields) by in-place Cooley-Tukey algorithms.
 
-use fields::Field;
 use fields::Encode;
+use fields::Field;
 
 /// 2-radix FFT.
 ///
@@ -20,8 +20,10 @@ use fields::Encode;
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft2<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field, F::E: Clone
+pub fn fft2<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field,
+    F::E: Clone,
 {
     fft2_in_place_rearrange(zp, &mut *data);
     fft2_in_place_compute(zp, &mut *data, omega);
@@ -35,8 +37,10 @@ where F: Field, F::E: Clone
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft2_inverse<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field + Encode<u32>, F::E: Clone
+pub fn fft2_inverse<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field + Encode<u32>,
+    F::E: Clone,
 {
     let omega_inv = zp.inv(omega);
     let len = data.len();
@@ -47,8 +51,9 @@ where F: Field + Encode<u32>, F::E: Clone
     }
 }
 
-fn fft2_in_place_rearrange<F>(_zp: &F, data: &mut [F::E]) 
-where F: Field
+fn fft2_in_place_rearrange<F>(_zp: &F, data: &mut [F::E])
+where
+    F: Field,
 {
     let mut target = 0;
     for pos in 0..data.len() {
@@ -64,8 +69,10 @@ where F: Field
     }
 }
 
-fn fft2_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field, F::E: Clone
+fn fft2_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field,
+    F::E: Clone,
 {
     let mut depth = 0usize;
     while 1usize << depth < data.len() {
@@ -98,8 +105,10 @@ where F: Field, F::E: Clone
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft3<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field, F::E: Clone
+pub fn fft3<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field,
+    F::E: Clone,
 {
     fft3_in_place_rearrange(zp, &mut *data);
     fft3_in_place_compute(zp, &mut *data, omega);
@@ -113,8 +122,10 @@ where F: Field, F::E: Clone
 ///
 /// `data.len()` must be a power of 2. omega must be a root of unity of order
 /// `data.len()`
-pub fn fft3_inverse<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field + Encode<u32>, F::E: Clone
+pub fn fft3_inverse<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field + Encode<u32>,
+    F::E: Clone,
 {
     let omega_inv = zp.inv(omega);
     let len_inv = zp.inv(zp.encode(data.len() as u32));
@@ -138,7 +149,10 @@ fn fft3_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::E]) {
     let mut target = 0isize;
     let trigits_len = trigits_len(data.len() - 1);
     let mut trigits: Vec<u8> = ::std::iter::repeat(0).take(trigits_len).collect();
-    let powers: Vec<isize> = (0..trigits_len).map(|x| 3isize.pow(x as u32)).rev().collect();
+    let powers: Vec<isize> = (0..trigits_len)
+        .map(|x| 3isize.pow(x as u32))
+        .rev()
+        .collect();
     for pos in 0..data.len() {
         if target as usize > pos {
             data.swap(target as usize, pos)
@@ -156,8 +170,10 @@ fn fft3_in_place_rearrange<F: Field>(_zp: &F, data: &mut [F::E]) {
     }
 }
 
-fn fft3_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: &F::E) 
-where F: Field, F::E: Clone
+fn fft3_in_place_compute<F>(zp: &F, data: &mut [F::E], omega: &F::E)
+where
+    F: Field,
+    F::E: Clone,
 {
     let mut step = 1;
     let big_omega = zp.pow(omega, (data.len() as u32 / 3));
@@ -175,8 +191,14 @@ where F: Field, F::E: Clone
                 let z = zp.mul(&data[pair + 2 * step], &factor_sq);
 
                 data[pair] = zp.add(zp.add(&x, &y), &z);
-                data[pair + step] = zp.add(zp.add(&x, zp.mul(&big_omega, &y)), zp.mul(&big_omega_sq, &z));
-                data[pair + 2 * step] = zp.add(zp.add(&x, zp.mul(&big_omega_sq, &y)), zp.mul(&big_omega, &z));
+                data[pair + step] = zp.add(
+                    zp.add(&x, zp.mul(&big_omega, &y)),
+                    zp.mul(&big_omega_sq, &z),
+                );
+                data[pair + 2 * step] = zp.add(
+                    zp.add(&x, zp.mul(&big_omega_sq, &y)),
+                    zp.mul(&big_omega, &z),
+                );
 
                 pair += jump;
             }
@@ -188,12 +210,15 @@ where F: Field, F::E: Clone
 
 #[cfg(test)]
 pub mod test {
-    
+
     use super::*;
-    use ::fields::{PrimeField, New, Encode, Decode, SliceEncode, SliceDecode};
+    use fields::{Decode, Encode, New, PrimeField, SliceDecode, SliceEncode};
 
     pub fn test_fft2<F>()
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         // field is Z_433 in which 354 is an 8th root of unity
         let field = F::new(433);
@@ -201,11 +226,17 @@ pub mod test {
 
         let mut data = field.encode_slice([1, 2, 3, 4, 5, 6, 7, 8]);
         fft2(&field, &mut data, &omega);
-        assert_eq!(field.decode_slice(data), [36, 303, 146, 3, 429, 422, 279, 122]);
+        assert_eq!(
+            field.decode_slice(data),
+            [36, 303, 146, 3, 429, 422, 279, 122]
+        );
     }
 
-    pub fn test_fft2_inverse<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    pub fn test_fft2_inverse<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         // field is Z_433 in which 354 is an 8th root of unity
         let field = F::new(433);
@@ -216,8 +247,11 @@ pub mod test {
         assert_eq!(field.decode_slice(data), [1, 2, 3, 4, 5, 6, 7, 8])
     }
 
-    pub fn test_fft2_big<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    pub fn test_fft2_big<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         let field = F::new(5038849);
         let omega = field.encode(4318906);
@@ -228,8 +262,11 @@ pub mod test {
         assert_eq!(field.decode_slice(data), (0..256).collect::<Vec<_>>());
     }
 
-    pub fn test_fft3<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    pub fn test_fft3<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         // field is Z_433 in which 150 is an 9th root of unity
         let field = F::new(433);
@@ -237,11 +274,17 @@ pub mod test {
 
         let mut data = field.encode_slice([1, 2, 3, 4, 5, 6, 7, 8, 9]);
         fft3(&field, &mut data, &omega);
-        assert_eq!(field.decode_slice(data), [45, 404, 407, 266, 377, 47, 158, 17, 20]);
+        assert_eq!(
+            field.decode_slice(data),
+            [45, 404, 407, 266, 377, 47, 158, 17, 20]
+        );
     }
 
-    pub fn test_fft3_inverse<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    pub fn test_fft3_inverse<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         // field is Z_433 in which 150 is an 9th root of unity
         let field = F::new(433);
@@ -252,8 +295,11 @@ pub mod test {
         assert_eq!(field.decode_slice(data), [1, 2, 3, 4, 5, 6, 7, 8, 9])
     }
 
-    pub fn test_fft3_big<F>() 
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32>, F::E: Clone, F::P: From<u32>
+    pub fn test_fft3_big<F>()
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32>,
+        F::E: Clone,
+        F::P: From<u32>,
     {
         let field = F::new(5038849);
         let omega = field.encode(1814687);
@@ -263,5 +309,4 @@ pub mod test {
         fft3_inverse(&field, &mut data, &omega);
         assert_eq!(field.decode_slice(data), (0..19683).collect::<Vec<_>>());
     }
-    
 }

@@ -10,7 +10,7 @@
 extern crate bencher;
 extern crate threshold_secret_sharing as tss;
 
-use tss::*;     
+use tss::*;
 
 mod packed {
 
@@ -19,9 +19,10 @@ mod packed {
 
     pub fn bench_large_secret_count(b: &mut Bencher) {
         let ref pss = PSS_155_728_100;
-        let all_secrets = vec![5 ; pss.secret_count * 100];
+        let all_secrets = vec![5; pss.secret_count * 100];
         b.iter(|| {
-            let _shares: Vec<Vec<i64>> = all_secrets.chunks(pss.secret_count)
+            let _shares: Vec<Vec<i64>> = all_secrets
+                .chunks(pss.secret_count)
                 .map(|secrets| pss.share(&secrets))
                 .collect();
         });
@@ -29,7 +30,7 @@ mod packed {
 
     pub fn bench_large_share_count(b: &mut Bencher) {
         let ref pss = PSS_155_19682_100;
-        let secrets = vec![5 ; pss.secret_count];
+        let secrets = vec![5; pss.secret_count];
         b.iter(|| {
             let _shares = pss.share(&secrets);
         });
@@ -37,7 +38,7 @@ mod packed {
 
     pub fn bench_large_reconstruct(b: &mut Bencher) {
         let ref pss = PSS_155_19682_100;
-        let secrets = vec![5 ; pss.secret_count];
+        let secrets = vec![5; pss.secret_count];
         let all_shares = pss.share(&secrets);
 
         // reconstruct using minimum number of shares required
@@ -48,12 +49,13 @@ mod packed {
             let _recovered_secrets = pss.reconstruct(&indices, &shares);
         });
     }
-
 }
 
-benchmark_group!(packed,
-                 packed::bench_large_secret_count,
-                 packed::bench_large_share_count,
-                 packed::bench_large_reconstruct);
+benchmark_group!(
+    packed,
+    packed::bench_large_secret_count,
+    packed::bench_large_share_count,
+    packed::bench_large_reconstruct
+);
 
 benchmark_main!(packed);

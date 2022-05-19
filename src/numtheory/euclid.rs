@@ -15,16 +15,19 @@ pub fn gcd(a: i64, b: i64) -> (i64, i64, i64) {
 
 // TODO see exercise 4.10 in Shoup
 pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
-    
     // simple cases
-    if a == 0 { return (b, 0, 1) }
-    if b == 0 { return (a, 1, 0) }
-    
+    if a == 0 {
+        return (b, 0, 1);
+    }
+    if b == 0 {
+        return (a, 1, 0);
+    }
+
     let mut u = 1;
     let mut v = 0;
     let mut s = 0;
     let mut t = 1;
-    
+
     // find greatest power r of 2 dividing both a and b
     let mut r = 0;
     while (a | b) & 1 == 0 {
@@ -32,22 +35,22 @@ pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
         b >>= 1;
         r += 1;
     }
-    
+
     let alpha = a;
     let beta = b;
-    
+
     while a & 1 == 0 {
         a >>= 1;
-        
+
         if (u | v) & 1 == 0 {
             u >>= 1;
             v >>= 1;
         } else {
-            u = (u + beta) >> 1; 
+            u = (u + beta) >> 1;
             v = (v - alpha) >> 1;
         }
     }
-    
+
     while a != b {
         if b & 1 == 0 {
             b >>= 1;
@@ -71,7 +74,7 @@ pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
             t = t - v;
         }
     }
-    
+
     (a << r, s, t)
 }
 
@@ -97,22 +100,21 @@ pub fn mod_inverse(k: i64, prime: i64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    
+
     use super::*;
-    
+
     #[test]
     fn test_gcd() {
         assert_eq!(gcd(12, 16), (4, -1, 1));
     }
-    
+
     #[test]
     pub fn test_binary_egcd() {
         assert_eq!(binary_egcd(10, 4), (2, 1, -2));
     }
-    
+
     #[test]
     fn test_mod_inverse() {
         assert_eq!(mod_inverse(3, 7), 5);
     }
-    
 }

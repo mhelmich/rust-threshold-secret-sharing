@@ -9,8 +9,8 @@
 //! Packed (or ramp) variant of Shamir secret sharing,
 //! allowing efficient sharing of several secrets together.
 
+use fields::{Encode, Field};
 use rand;
-use fields::{Field, Encode};
 
 /// Parameters for the packed variant of Shamir secret sharing,
 /// specifying number of secrets shared together, total number of shares, and privacy threshold.
@@ -37,11 +37,9 @@ use fields::{Field, Encode};
 ///
 /// An optional `paramgen` feature provides methods for finding suitable parameters satisfying
 /// these somewhat complex requirements, in addition to several fixed parameter choices.
-#[derive(Debug,Clone,PartialEq)]
-pub struct PackedSecretSharing<F: Field>
-{
+#[derive(Debug, Clone, PartialEq)]
+pub struct PackedSecretSharing<F: Field> {
     // abstract properties
-
     /// Maximum number of shares that can be known without exposing the secrets
     /// (privacy threshold).
     pub threshold: usize,
@@ -51,7 +49,6 @@ pub struct PackedSecretSharing<F: Field>
     pub secret_count: usize,
 
     // implementation configuration
-
     /// Finite field in which computation is taking place.
     pub field: F,
     /// `m`-th principal root of unity in Zp, where `m = secret_count + threshold + 1`
@@ -61,8 +58,11 @@ pub struct PackedSecretSharing<F: Field>
     pub omega_shares: F::E,
 }
 
-impl<F> PackedSecretSharing<F> 
-where F: Field, F: Encode<u32>, F::E: Clone
+impl<F> PackedSecretSharing<F>
+where
+    F: Field,
+    F: Encode<u32>,
+    F::E: Clone,
 {
     /// Minimum number of shares required to reconstruct secrets.
     ///
@@ -81,7 +81,10 @@ where F: Field, F: Encode<u32>, F::E: Clone
         let mut poly = self.sample_polynomial(secrets);
         assert_eq!(poly.len(), self.reconstruct_limit() + 1);
         // .. and extend it (with zeroes)
-        poly.extend(vec![self.field.zero(); self.share_count - self.reconstruct_limit()]);
+        poly.extend(vec![
+            self.field.zero();
+            self.share_count - self.reconstruct_limit()
+        ]);
         assert_eq!(poly.len(), self.share_count + 1);
         // evaluate polynomial to generate shares
         let mut shares = self.evaluate_polynomial(poly);
@@ -92,20 +95,23 @@ where F: Field, F: Encode<u32>, F::E: Clone
         assert_eq!(shares.len(), self.share_count);
         shares
     }
-    
-    #[cfg(feature="safety_override")]
+
+    #[cfg(feature = "safety_override")]
     pub fn deterministic_share(&self, secrets_and_randomness: &[F::E]) -> Vec<F::E> {
         let mut values = secrets_and_randomness.to_vec();
         values.insert(0, self.field.zero());
         assert_eq!(values.len(), self.reconstruct_limit() + 1);
         ::numtheory::fft::fft2_inverse(&self.field, &mut *values, &self.omega_secrets);
         let mut poly = values;
-        
+
         // TODO unify this with `share`
-        
+
         assert_eq!(poly.len(), self.reconstruct_limit() + 1);
         // .. and extend it (with zeroes)
-        poly.extend(vec![self.field.zero(); self.share_count - self.reconstruct_limit()]);
+        poly.extend(vec![
+            self.field.zero();
+            self.share_count - self.reconstruct_limit()
+        ]);
         assert_eq!(poly.len(), self.share_count + 1);
         // evaluate polynomial to generate shares
         let mut shares = self.evaluate_polynomial(poly);
@@ -123,7 +129,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
         let mut rng = rand::OsRng::new().unwrap();
         let randomness = self.field.sample_with_replacement(self.threshold, &mut rng);
         debug_assert!(self.field.neq(&randomness[0], &randomness[1])); // small probability for false negative
-        // recover polynomial
+                                                                       // recover polynomial
         let coefficients = self.recover_polynomial(secrets, randomness);
         assert_eq!(coefficients.len(), self.reconstruct_limit() + 1);
         coefficients
@@ -134,7 +140,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
         let mut values = vec![self.field.zero()];
         // let the subsequent values correspond to the secrets
         values.extend(secrets.to_vec()); // TODO can we do without to_vec?
-        // fill in with random values
+                                         // fill in with random values
         values.extend(randomness);
         // run backward FFT to recover polynomial in coefficient representation
         assert_eq!(values.len(), self.reconstruct_limit() + 1);
@@ -166,19 +172,22 @@ where F: Field, F: Encode<u32>, F::E: Clone
             let mut values = shares.to_vec();
             values.insert(0, self.field.zero());
             ::numtheory::fft::fft3_inverse(&self.field, &mut values, &self.omega_shares);
-            let mut coefficients = values.into_iter()
+            let mut coefficients = values
+                .into_iter()
                 .take(self.reconstruct_limit() + 1)
                 .collect::<Vec<_>>();
             ::numtheory::fft::fft2(&self.field, &mut coefficients, &self.omega_secrets);
-            let secrets = coefficients.into_iter()
+            let secrets = coefficients
+                .into_iter()
                 .skip(1)
                 .take(self.secret_count)
                 .collect();
-                // TODO replace with truncate
+            // TODO replace with truncate
             secrets
         } else {
             // we cannot use the FFT so default to Newton interpolation
-            let mut points: Vec<F::E> = indices.iter()
+            let mut points: Vec<F::E> = indices
+                .iter()
                 .map(|x| self.field.pow(&self.omega_shares, x + 1))
                 .collect();
             let mut values = shares.to_vec();
@@ -198,11 +207,11 @@ where F: Field, F: Encode<u32>, F::E: Clone
             secrets
         }
     }
-    
-    #[cfg(feature="safety_override")]
+
+    #[cfg(feature = "safety_override")]
     pub fn fully_reconstruct(&self, indices: &[u32], shares: &[F::E]) -> Vec<F::E> {
         // TODO unify code with `reconstruct` (only difference is how much is removed at end)
-        
+
         assert!(shares.len() == indices.len());
         assert!(shares.len() >= self.reconstruct_limit());
         if shares.len() == self.share_count {
@@ -210,7 +219,8 @@ where F: Field, F: Encode<u32>, F::E: Clone
             let mut values = shares.to_vec();
             values.insert(0, self.field.zero());
             ::numtheory::fft::fft3_inverse(&self.field, &mut values, &self.omega_shares);
-            let mut coefficients = values.into_iter()
+            let mut coefficients = values
+                .into_iter()
                 .take(self.reconstruct_limit() + 1)
                 .collect::<Vec<_>>();
             ::numtheory::fft::fft2(&self.field, &mut coefficients, &self.omega_secrets);
@@ -219,7 +229,8 @@ where F: Field, F: Encode<u32>, F::E: Clone
             secrets
         } else {
             // we cannot use the FFT so default to Newton interpolation
-            let mut points: Vec<F::E> = indices.iter()
+            let mut points: Vec<F::E> = indices
+                .iter()
                 .map(|x| self.field.pow(&self.omega_shares, x + 1))
                 .collect();
             let mut values = shares.to_vec();
@@ -240,9 +251,7 @@ where F: Field, F: Encode<u32>, F::E: Clone
     }
 }
 
-
-mod instances 
-{    
+mod instances {
     use super::*;
     use fields::NaturalPrimeField;
 
@@ -281,26 +290,29 @@ mod instances
 
     /// Example of PSS settings, for sharing 100 secrets into 19682 shares, with
     /// a privacy threshold of 155.
-    pub static PSS_155_19682_100: PackedSecretSharing<NaturalPrimeField<i64>> = PackedSecretSharing {
-        threshold: 155,
-        share_count: 19682,
-        secret_count: 100,
-        field: NaturalPrimeField(5038849), // TODO
-        omega_secrets: 4318906,
-        omega_shares: 1814687,
-    };
+    pub static PSS_155_19682_100: PackedSecretSharing<NaturalPrimeField<i64>> =
+        PackedSecretSharing {
+            threshold: 155,
+            share_count: 19682,
+            secret_count: 100,
+            field: NaturalPrimeField(5038849), // TODO
+            omega_secrets: 4318906,
+            omega_shares: 1814687,
+        };
 }
 pub use self::instances::*;
-
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use ::fields::*;
-    
+    use fields::*;
+
     pub fn test_recover_polynomial<F>()
-    where F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
+    where
+        F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone,
+        F::P: From<u32>,
+        F::E: Clone,
     {
         let field = F::new(433);
         let pss = PackedSecretSharing {
@@ -311,16 +323,17 @@ mod tests {
             omega_shares: field.encode(150),
             field: field.clone(),
         };
-        
+
         let secrets = vec![1, 2, 3];
-        let randomness = vec![8, 8, 8, 8];  // use fixed randomness
-        let poly = pss.recover_polynomial(&field.encode_slice(secrets), field.encode_slice(randomness));
+        let randomness = vec![8, 8, 8, 8]; // use fixed randomness
+        let poly =
+            pss.recover_polynomial(&field.encode_slice(secrets), field.encode_slice(randomness));
         assert_eq!(
             field.decode_slice(poly),
             vec![113, 51, 261, 267, 108, 432, 388, 112]
         );
     }
-    
+
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn test_evaluate_polynomial<F>()
     where F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
@@ -346,27 +359,40 @@ mod tests {
                51, 60, 305, 395,  84, 156, 160, 112, 422]
         );
     }
-    
 }
 
- #[allow(unused_macros)]
+#[allow(unused_macros)]
 macro_rules! all_packed_tests {
     ($field:ty) => {
-        #[test] fn test_recover_polynomial() { ::packed::tests::test_recover_polynomial::<$field>(); }
-        #[test] fn test_evaluate_polynomial() { ::packed::tests::test_evaluate_polynomial::<$field>(); }
-    }
+        #[test]
+        fn test_recover_polynomial() {
+            ::packed::tests::test_recover_polynomial::<$field>();
+        }
+        #[test]
+        fn test_evaluate_polynomial() {
+            ::packed::tests::test_evaluate_polynomial::<$field>();
+        }
+    };
 }
 
-#[cfg(test)] mod natural    { all_packed_tests!(::fields::NaturalPrimeField<i64>); }
-#[cfg(test)] mod montgomery { all_packed_tests!(::fields::MontgomeryField32); }
-#[cfg(all(test, feature="largefield"))] mod large { all_packed_tests!(::fields::LargePrimeField); }
-
+#[cfg(test)]
+mod natural {
+    all_packed_tests!(::fields::NaturalPrimeField<i64>);
+}
+#[cfg(test)]
+mod montgomery {
+    all_packed_tests!(::fields::MontgomeryField32);
+}
+#[cfg(all(test, feature = "largefield"))]
+mod large {
+    all_packed_tests!(::fields::LargePrimeField);
+}
 
 #[cfg(test)]
 mod old_tests {
 
     use super::*;
-    use ::fields::*;
+    use fields::*;
 
     #[test]
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -397,7 +423,7 @@ mod old_tests {
     #[test]
     fn test_large_share() {
         let ref pss = PSS_155_19682_100;
-        let secrets = vec![5 ; pss.secret_count];
+        let secrets = vec![5; pss.secret_count];
         let shares = pss.share(&secrets);
         assert_eq!(shares.len(), pss.share_count);
     }
@@ -430,8 +456,11 @@ mod old_tests {
         let shares_2 = pss.share(&secrets_2);
 
         // add shares pointwise
-        let shares_sum: Vec<i64> =
-            shares_1.iter().zip(shares_2).map(|(a, b)| (a + b) % pss.field.0).collect(); // TODO
+        let shares_sum: Vec<i64> = shares_1
+            .iter()
+            .zip(shares_2)
+            .map(|(a, b)| (a + b) % pss.field.0)
+            .collect(); // TODO
 
         // reconstruct sum, using same reconstruction limit
         let reconstruct_limit = pss.reconstruct_limit();
@@ -452,8 +481,11 @@ mod old_tests {
         let shares_2 = pss.share(&secrets_2);
 
         // multiply shares pointwise
-        let shares_product: Vec<i64> =
-            shares_1.iter().zip(shares_2).map(|(a, b)| (a * b) % pss.field.0).collect(); // TODO
+        let shares_product: Vec<i64> = shares_1
+            .iter()
+            .zip(shares_2)
+            .map(|(a, b)| (a * b) % pss.field.0)
+            .collect(); // TODO
 
         // reconstruct product, using double reconstruction limit
         let reconstruct_limit = pss.reconstruct_limit() * 2;
@@ -463,9 +495,7 @@ mod old_tests {
 
         assert_eq!(pss.field.decode_slice(recovered_secrets), [4, 10, 18]);
     }
-
 }
-
 
 #[cfg(feature = "paramgen")]
 mod paramgen;

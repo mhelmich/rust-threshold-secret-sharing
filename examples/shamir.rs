@@ -10,7 +10,6 @@ extern crate threshold_secret_sharing as tss;
 use tss::*;
 
 fn main() {
-
     type MyField = NaturalPrimeField<i64>;
     let field = MyField::new(41); // any large enough prime will do
 
@@ -32,5 +31,4 @@ fn main() {
 
     println!("The recovered secret is {}", recovered_secret);
     assert_eq!(recovered_secret, secret);
-
 }
