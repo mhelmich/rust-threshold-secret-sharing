@@ -146,15 +146,13 @@ where
         assert_eq!(values.len(), self.reconstruct_limit() + 1);
         // in-place FFT to turn values into coefficients
         ::numtheory::fft::fft2_inverse(&self.field, &mut *values, &self.omega_secrets);
-        let coefficients = values;
-        coefficients
+        values
     }
 
     fn evaluate_polynomial(&self, mut coefficients: Vec<F::E>) -> Vec<F::E> {
         assert_eq!(coefficients.len(), self.share_count + 1);
         ::numtheory::fft::fft3(&self.field, &mut coefficients, &self.omega_shares);
-        let points = coefficients;
-        points
+        coefficients
     }
 
     /// Reconstruct the secrets from a large enough subset of the shares.
@@ -177,13 +175,12 @@ where
                 .take(self.reconstruct_limit() + 1)
                 .collect::<Vec<_>>();
             ::numtheory::fft::fft2(&self.field, &mut coefficients, &self.omega_secrets);
-            let secrets = coefficients
+            coefficients
                 .into_iter()
                 .skip(1)
                 .take(self.secret_count)
-                .collect();
+                .collect()
             // TODO replace with truncate
-            secrets
         } else {
             // we cannot use the FFT so default to Newton interpolation
             let mut points: Vec<F::E> = indices
@@ -199,12 +196,11 @@ where
             let poly = ::numtheory::NewtonPolynomial::compute(&points, &values, &self.field);
             // evaluate at omega_secrets points to recover secrets
             // TODO optimise to avoid re-computation of power
-            let secrets = (1..self.reconstruct_limit())
+            (1..self.reconstruct_limit())
                 .map(|e| self.field.pow(&self.omega_secrets, e as u32))
                 .map(|point| poly.evaluate(&point, &self.field))
                 .take(self.secret_count)
-                .collect();
-            secrets
+                .collect()
         }
     }
 
@@ -334,7 +330,7 @@ mod tests {
         );
     }
 
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     pub fn test_evaluate_polynomial<F>()
     where F: PrimeField + New<u32> + Encode<u32> + Decode<u32> + Clone, F::P: From<u32>, F::E: Clone
     {
@@ -395,7 +391,7 @@ mod old_tests {
     use fields::*;
 
     #[test]
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     fn test_share() {
         let ref pss = PSS_4_26_3;
         let ref field = pss.field;

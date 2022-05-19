@@ -63,7 +63,7 @@ where
 
         NewtonPolynomial {
             points: points.to_vec(),
-            coefficients: coefficients,
+            coefficients,
         }
     }
 

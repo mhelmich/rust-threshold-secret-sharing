@@ -39,7 +39,7 @@ impl MontgomeryField32 {
     fn redc(&self, a: u64) -> Value {
         let m: u64 = (a as u32).wrapping_mul(self.n_quote) as u64;
         let t: u32 = ((a + m * (self.n as u64)) >> 32) as u32;
-        Value((if t >= (self.n) { t - (self.n) } else { t }))
+        Value(if t >= (self.n) { t - (self.n) } else { t })
     }
 }
 
@@ -57,16 +57,12 @@ impl New<u32> for MontgomeryField32 {
             tmp as u32
         };
         let tmp = ::numtheory::mod_inverse(prime as i64, r as i64);
-        let n_quote = if tmp > 0 {
-            (r as i64 - tmp) as u32
-        } else {
-            (r as i64 - tmp) as u32
-        };
+        let n_quote = (r as i64 - tmp) as u32;
         let r_cube = ::numtheory::mod_pow(r as i64 % prime as i64, 3u32, prime as i64);
         MontgomeryField32 {
             n: prime,
-            r_inv: r_inv,
-            n_quote: n_quote,
+            r_inv,
+            n_quote,
             r_cube: r_cube as u32,
         }
     }
@@ -141,7 +137,7 @@ impl Field for MontgomeryField32 {
                 acc = self.mul(acc, x);
             }
             x = self.mul(x, x); // waste one of these by having it here but code is simpler (tiny bit)
-            e = e >> 1;
+            e >>= 1;
         }
         acc
     }

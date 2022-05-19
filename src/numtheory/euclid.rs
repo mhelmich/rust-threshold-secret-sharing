@@ -69,9 +69,9 @@ pub fn binary_egcd(mut a: i64, mut b: i64) -> (i64, i64, i64) {
             s = u;
             t = v;
         } else {
-            b = b - a;
-            s = s - u;
-            t = t - v;
+            b -= a;
+            s -= u;
+            t -= v;
         }
     }
 

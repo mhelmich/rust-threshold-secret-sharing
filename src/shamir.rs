@@ -117,7 +117,7 @@ where
             })
             .collect();
         // interpolate
-        ::numtheory::lagrange_interpolation_at_zero(&*points, &shares, &self.field)
+        ::numtheory::lagrange_interpolation_at_zero(&*points, shares, &self.field)
     }
 }
 

@@ -19,9 +19,8 @@ impl<F: Field> LagrangeConstants<F> {
             let xi = &points[i];
             let mut num = field.one();
             let mut denum = field.one();
-            for j in 0..points.len() {
+            for (j, xj) in points.iter().enumerate() {
                 if j != i {
-                    let xj = &points[j];
                     num = field.mul(num, field.sub(xj, point));
                     denum = field.mul(denum, field.sub(xj, xi));
                 }
@@ -36,10 +35,10 @@ impl<F: Field> LagrangeConstants<F> {
     /// Note that care must be taken to provide the same `field` as the one used
     /// for computing the constants!
     pub fn interpolate(&self, values: &[F::E], field: &F) -> F::E {
-        let ref constants = self.0;
+        let constants = &self.0;
         assert_eq!(values.len(), constants.len());
         // compute weighted sum
-        ::numtheory::weighted_sum(values, constants, field)
+        ::numtheory::weighted_sum(values, &constants[..], field)
     }
 }
 

@@ -15,7 +15,7 @@ pub fn mod_pow(mut x: i64, mut e: u32, prime: i64) -> i64 {
             acc = (acc * x) % prime;
         }
         x = (x * x) % prime; // waste one of these by having it here but code is simpler (tiny bit)
-        e = e >> 1;
+        e >>= 1;
     }
     acc
 }
@@ -38,7 +38,7 @@ where
             acc = field.mul(&acc, &x);
         }
         x = field.mul(&x, &x); // waste one of these by having it here but code is simpler (tiny bit)
-        e = e >> 1;
+        e >>= 1;
     }
     acc
 }

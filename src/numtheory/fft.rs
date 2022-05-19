@@ -46,7 +46,7 @@ where
     let len = data.len();
     let len_inv = zp.inv(zp.encode(len as u32));
     fft2(zp, data, &omega_inv);
-    for mut x in data {
+    for x in data {
         *x = zp.mul(&*x, &len_inv);
     }
 }
@@ -130,7 +130,7 @@ where
     let omega_inv = zp.inv(omega);
     let len_inv = zp.inv(zp.encode(data.len() as u32));
     fft3(zp, data, &omega_inv);
-    for mut x in data {
+    for x in data {
         *x = zp.mul(&*x, &len_inv);
     }
 }
@@ -176,7 +176,7 @@ where
     F::E: Clone,
 {
     let mut step = 1;
-    let big_omega = zp.pow(omega, (data.len() as u32 / 3));
+    let big_omega = zp.pow(omega, data.len() as u32 / 3);
     let big_omega_sq = zp.mul(&big_omega, &big_omega);
     while step < data.len() {
         let jump = 3 * step;
